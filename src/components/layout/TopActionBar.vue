@@ -32,7 +32,7 @@
       <div class="flex items-center gap-4">
         <div class="flex items-center gap-2 text-sm">
           <span :class="!isAnalysisMode ? 'text-primary-400 font-medium' : 'text-dashboard-muted'">
-            经营看板
+            公司级经营驾驶舱
           </span>
           <button 
             @click="$emit('toggle-mode')"

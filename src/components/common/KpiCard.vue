@@ -23,36 +23,37 @@
         </span>
         <span class="text-sm text-dashboard-muted">{{ unit }}</span>
       </div>
-      <div class="text-xs text-dashboard-muted mt-1">
-        目标: {{ formattedTarget }} {{ unit }}
+      <div class="flex items-center gap-4 mt-1">
+        <span class="text-xs text-dashboard-muted">目标: {{ formattedTarget }} {{ unit }}</span>
+        <span class="text-xs" :class="changeClass(mom)">
+          环比 {{ formatChange(mom) }}
+        </span>
+        <span class="text-xs" :class="changeClass(yoy)">
+          同比 {{ formatChange(yoy) }}
+        </span>
       </div>
     </div>
     
-    <!-- 变化指标 -->
-    <div class="flex items-center gap-4 mb-3">
-      <div class="flex items-center gap-1">
-        <span class="text-xs text-dashboard-muted">环比</span>
-        <span :class="changeClass(mom)">{{ formatChange(mom) }}</span>
-      </div>
-      <div class="flex items-center gap-1">
-        <span class="text-xs text-dashboard-muted">同比</span>
-        <span :class="changeClass(yoy)">{{ formatChange(yoy) }}</span>
-      </div>
+    <!-- 柱状图+折线组合图表 -->
+    <div class="h-32">
+      <ComboBarChart
+        :data="dailyData"
+        :targets="dailyTargets"
+        :height="120"
+        :isAccumulated="activeTab === 'accumulated'"
+      />
     </div>
-    
-    <!-- 迷你趋势图 -->
-    <MiniTrendChart :data="trendData" :isPositive="mom >= 0" />
     
     <!-- 子指标 -->
-    <div v-if="subMetric" class="mt-3 pt-3 border-t border-dashboard-border">
+    <div v-if="currentSubMetric" class="mt-3 pt-3 border-t border-dashboard-border">
       <div class="flex items-center justify-between">
-        <span class="text-xs text-dashboard-muted">{{ subMetric.name }}</span>
+        <span class="text-xs text-dashboard-muted">{{ currentSubMetric.name }}</span>
         <div class="flex items-center gap-2">
           <span class="text-sm font-medium" :class="getSubMetricClass()">
-            {{ subMetric.actual }}{{ subMetric.unit || '%' }}
+            {{ currentSubMetric.actual }}{{ currentSubMetric.unit || '%' }}
           </span>
           <span class="text-xs text-dashboard-muted">
-            / 目标 {{ subMetric.target }}{{ subMetric.unit || '%' }}
+            / 目标 {{ currentSubMetric.target }}{{ currentSubMetric.unit || '%' }}
           </span>
         </div>
       </div>
@@ -64,7 +65,7 @@
 import { ref, computed } from 'vue'
 import StatusLight from './StatusLight.vue'
 import TabSwitch from './TabSwitch.vue'
-import MiniTrendChart from './MiniTrendChart.vue'
+import ComboBarChart from './ComboBarChart.vue'
 
 const props = defineProps({
   title: String,
@@ -85,13 +86,38 @@ const actual = computed(() => currentData.value?.actual || 0)
 const target = computed(() => currentData.value?.target || 0)
 const mom = computed(() => currentData.value?.mom || 0)
 const yoy = computed(() => currentData.value?.yoy || 0)
-const trendData = computed(() => currentData.value?.trend || [])
+const currentSubMetric = computed(() => currentData.value?.subMetrics || props.subMetric)
 
 const status = computed(() => {
   const rate = actual.value / target.value
   if (rate >= 0.95) return 'green'
   if (rate >= 0.85) return 'yellow'
   return 'red'
+})
+
+// 生成每日数据（模拟数据）
+const dailyData = computed(() => {
+  // 当月显示15天，累计显示12个月
+  const days = activeTab.value === 'month' ? 15 : 12
+  const baseActual = actual.value
+  const baseTarget = target.value
+
+  const data = []
+  for (let i = 0; i < days; i++) {
+    // 生成有一定波动的每日数据
+    const ratio = 0.85 + Math.random() * 0.25  // 85%-110%之间波动
+    const dailyTarget = baseTarget / days
+    const dailyActual = dailyTarget * ratio
+    data.push(Math.round(dailyActual))
+  }
+  return data
+})
+
+const dailyTargets = computed(() => {
+  const days = activeTab.value === 'month' ? 15 : 12
+  const baseTarget = target.value
+  const dailyTarget = baseTarget / days
+  return Array(days).fill(Math.round(dailyTarget))
 })
 
 const formattedActual = computed(() => formatLargeNumber(actual.value))
@@ -109,12 +135,12 @@ const formatChange = (value) => {
 }
 
 const changeClass = (value) => {
-  return value >= 0 ? 'text-status-green text-xs font-medium' : 'text-status-red text-xs font-medium'
+  return value >= 0 ? 'text-status-green font-medium' : 'text-status-red font-medium'
 }
 
 const getSubMetricClass = () => {
-  if (!props.subMetric) return ''
-  const rate = props.subMetric.actual / props.subMetric.target
+  if (!currentSubMetric.value) return ''
+  const rate = currentSubMetric.value.actual / currentSubMetric.value.target
   if (rate >= 0.95) return 'text-status-green'
   if (rate >= 0.85) return 'text-status-yellow'
   return 'text-status-red'
