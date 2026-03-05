@@ -5,15 +5,16 @@
         <span>📋</span>
         行动跟踪与任务下达
       </h2>
-      <button 
+      <button
         @click="showBatchDispatch"
         class="text-xs px-3 py-1.5 rounded-lg bg-primary-500/20 text-primary-400 hover:bg-primary-500/30 transition-colors"
       >
-        ✉️ 批量派发任务
+        ✉️ 批量派发
       </button>
     </div>
-    
-    <div class="overflow-x-auto">
+
+    <!-- 桌面端表格 -->
+    <div class="hidden lg:block overflow-x-auto">
       <table class="w-full text-sm">
         <thead>
           <tr class="border-b border-dashboard-border">
@@ -27,8 +28,8 @@
           </tr>
         </thead>
         <tbody>
-          <tr 
-            v-for="item in actionTrackerData" 
+          <tr
+            v-for="item in actionTrackerData"
             :key="item.id"
             class="border-b border-dashboard-border/50 hover:bg-dashboard-dark/30 transition-colors"
           >
@@ -48,7 +49,7 @@
               {{ item.deadline }}
             </td>
             <td class="py-3 px-3">
-              <span 
+              <span
                 class="inline-flex items-center px-2 py-0.5 rounded-full text-xs"
                 :class="getStatusClass(item.status)"
               >
@@ -56,7 +57,7 @@
               </span>
             </td>
             <td class="py-3 px-3 text-center">
-              <button 
+              <button
                 @click="openDispatchPanel(item)"
                 class="inline-flex items-center gap-1 px-3 py-1 rounded-lg bg-primary-500/20 text-primary-400 hover:bg-primary-500/30 transition-colors text-xs"
               >
@@ -68,30 +69,78 @@
         </tbody>
       </table>
     </div>
-    
+
+    <!-- 移动端卡片列表 -->
+    <div class="lg:hidden space-y-3">
+      <div
+        v-for="item in actionTrackerData"
+        :key="item.id"
+        class="bg-dashboard-dark/30 rounded-lg p-3"
+      >
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-dashboard-text font-medium text-sm">{{ item.indicator }}</span>
+          <span
+            class="inline-flex items-center px-2 py-0.5 rounded-full text-xs"
+            :class="getStatusClass(item.status)"
+          >
+            {{ item.status }}
+          </span>
+        </div>
+        <div class="text-xs text-dashboard-muted mb-2 line-clamp-2">
+          {{ item.rootCause }}
+        </div>
+        <div class="flex items-center justify-between text-xs">
+          <span class="text-primary-400">{{ item.owner }}</span>
+          <span class="text-dashboard-muted">截止: {{ item.deadline }}</span>
+        </div>
+        <button
+          @click="openDispatchPanel(item)"
+          class="mt-3 w-full flex items-center justify-center gap-1 px-3 py-2 rounded-lg bg-primary-500/20 text-primary-400 hover:bg-primary-500/30 transition-colors text-xs"
+        >
+          <span>✉️</span>
+          一键派发任务
+        </button>
+      </div>
+    </div>
+
     <!-- 底部统计 -->
-    <div class="mt-4 pt-4 border-t border-dashboard-border flex items-center justify-between">
-      <div class="flex items-center gap-6 text-xs">
+    <div class="mt-4 pt-4 border-t border-dashboard-border">
+      <div class="hidden lg:flex items-center justify-between">
+        <div class="flex items-center gap-6 text-xs">
+          <span class="text-dashboard-muted">
+            总计: <strong class="text-dashboard-text">{{ actionTrackerData.length }}</strong> 项行动
+          </span>
+          <span class="text-dashboard-muted">
+            进行中: <strong class="text-status-yellow">{{ inProgressCount }}</strong> 项
+          </span>
+          <span class="text-dashboard-muted">
+            待启动: <strong class="text-status-red">{{ pendingCount }}</strong> 项
+          </span>
+          <span class="text-dashboard-muted">
+            已完成: <strong class="text-status-green">{{ completedCount }}</strong> 项
+          </span>
+        </div>
+        <button class="text-xs text-primary-400 hover:text-primary-300 transition-colors">
+          导出报告 →
+        </button>
+      </div>
+
+      <!-- 移动端统计 -->
+      <div class="lg:hidden flex items-center justify-center gap-4 text-xs flex-wrap">
         <span class="text-dashboard-muted">
-          总计: <strong class="text-dashboard-text">{{ actionTrackerData.length }}</strong> 项行动
+          <strong class="text-status-yellow">{{ inProgressCount }}</strong> 进行中
         </span>
         <span class="text-dashboard-muted">
-          进行中: <strong class="text-status-yellow">{{ inProgressCount }}</strong> 项
+          <strong class="text-status-red">{{ pendingCount }}</strong> 待启动
         </span>
         <span class="text-dashboard-muted">
-          待启动: <strong class="text-status-red">{{ pendingCount }}</strong> 项
-        </span>
-        <span class="text-dashboard-muted">
-          已完成: <strong class="text-status-green">{{ completedCount }}</strong> 项
+          <strong class="text-status-green">{{ completedCount }}</strong> 已完成
         </span>
       </div>
-      <button class="text-xs text-primary-400 hover:text-primary-300 transition-colors">
-        导出报告 →
-      </button>
     </div>
-    
+
     <!-- 任务派发面板 -->
-    <TaskDispatchPanel 
+    <TaskDispatchPanel
       v-model:visible="showDispatchPanel"
       :taskData="currentTaskData"
       @submit="handleTaskSubmit"

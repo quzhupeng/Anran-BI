@@ -158,12 +158,6 @@ import { bscIndicators } from '../../composables/useMockData'
 const selectedIndicator = ref(null)
 
 const allIndicators = computed(() => {
-
-<script setup>
-import { computed } from 'vue'
-import { bscIndicators } from '../../composables/useMockData'
-
-const allIndicators = computed(() => {
   const result = []
   Object.entries(bscIndicators).forEach(([dimension, data]) => {
     data.indicators.forEach(ind => {
