@@ -5,9 +5,17 @@
         <span>🔔</span>
         智能预警中心
       </h2>
-      <span class="text-xs px-2 py-0.5 rounded-full bg-status-red/20 text-status-red">
-        {{ alerts.length }} 条预警
-      </span>
+      <div class="flex items-center gap-2">
+        <button
+          class="text-xs px-2 py-0.5 rounded bg-dashboard-dark/50 border border-dashboard-border text-dashboard-muted hover:text-dashboard-text transition-colors"
+          @click="$emit('open-alert-config')"
+        >
+          ⚙️ 预警配置
+        </button>
+        <span class="text-xs px-2 py-0.5 rounded-full bg-status-red/20 text-status-red">
+          {{ alerts.length }} 条预警
+        </span>
+      </div>
     </div>
     
     <div class="flex-1 overflow-auto space-y-2">
@@ -41,12 +49,15 @@
     </div>
     
     <!-- 底部操作 -->
-    <div class="mt-4 pt-3 border-t border-dashboard-border flex items-center justify-between">
-      <button class="text-xs text-primary-400 hover:text-primary-300 transition-colors">
+    <div class="mt-4 pt-3 border-t border-dashboard-border flex items-center justify-between gap-2">
+      <button class="text-xs text-primary-400 hover:text-primary-300 transition-colors whitespace-nowrap">
         查看全部预警 →
       </button>
-      <button class="text-xs text-dashboard-muted hover:text-dashboard-text transition-colors">
-        标记全部已读
+      <button
+        class="text-xs px-2 py-1 rounded bg-primary-500 text-white hover:bg-primary-600 transition-colors whitespace-nowrap"
+        @click="$emit('open-report')"
+      >
+        导出报告(PDF/PPT)
       </button>
     </div>
   </div>
@@ -54,6 +65,8 @@
 
 <script setup>
 import { alertData } from '../../composables/useMockData'
+
+defineEmits(['open-report', 'open-alert-config'])
 
 const alerts = alertData
 </script>

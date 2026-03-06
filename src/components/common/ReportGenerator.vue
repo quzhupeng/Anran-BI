@@ -112,6 +112,9 @@
               <button @click="exportPDF" class="px-4 py-2 rounded-lg bg-dashboard-dark border border-dashboard-border text-sm text-dashboard-muted hover:text-dashboard-text transition-colors flex items-center gap-2">
                 <span>📄</span> 导出PDF
               </button>
+              <button @click="exportPPT" class="px-4 py-2 rounded-lg bg-dashboard-dark border border-dashboard-border text-sm text-dashboard-muted hover:text-dashboard-text transition-colors flex items-center gap-2">
+                <span>📊</span> 导出PPT
+              </button>
             </div>
             <div class="flex items-center gap-3">
               <button @click="handleClose" class="px-6 py-2 rounded-lg text-sm text-dashboard-muted hover:text-dashboard-text transition-colors">
@@ -244,6 +247,10 @@ const copyToClipboard = () => {
 
 const exportPDF = () => {
   alert('PDF导出功能开发中...\n将支持导出为可编辑的PDF文档')
+}
+
+const exportPPT = () => {
+  alert('PPT导出功能开发中...\n将支持导出为可编辑的PPT文档')
 }
 
 const generateReport = () => {

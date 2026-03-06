@@ -100,7 +100,16 @@ const props = defineProps({
   activeNav: { type: String, default: 'dashboard' }
 })
 
-const emit = defineEmits(['toggle-mode', 'nav-change', 'open-chatbi', 'open-report', 'open-dispatch', 'open-filter'])
+const emit = defineEmits([
+  'toggle-mode',
+  'nav-change',
+  'open-chatbi',
+  'open-report',
+  'open-dispatch',
+  'open-filter',
+  'open-home-edit',
+  'open-feedback'
+])
 
 const showMoreMenu = ref(false)
 const currentTime = ref('')
@@ -113,9 +122,12 @@ const navItems = [
 ]
 
 const moreActions = [
-  { id: 'chatbi', label: 'AI 智能洞察', icon: '🤖' },
+  { id: 'chatbi', label: '智能助手 / Chat', icon: '🤖' },
+  { id: 'diagnosis', label: 'AI诊断与洞察', icon: '🧠' },
+  { id: 'homeEdit', label: '自定义首页', icon: '🧩' },
   { id: 'report', label: '生成报告', icon: '📝' },
-  { id: 'dispatch', label: '派发任务', icon: '✉️' }
+  { id: 'dispatch', label: '派发任务', icon: '✉️' },
+  { id: 'feedback', label: '意见反馈', icon: '💬' }
 ]
 
 const updateTime = () => {
@@ -155,10 +167,16 @@ const handleAction = (id) => {
   showMoreMenu.value = false
   if (id === 'chatbi') {
     emit('open-chatbi')
+  } else if (id === 'diagnosis') {
+    emit('open-report')
+  } else if (id === 'homeEdit') {
+    emit('open-home-edit')
   } else if (id === 'report') {
     emit('open-report')
   } else if (id === 'dispatch') {
     emit('open-dispatch')
+  } else if (id === 'feedback') {
+    emit('open-feedback')
   }
 }
 </script>

@@ -7,12 +7,12 @@ import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import * as echarts from 'echarts'
 
 const props = defineProps({
-  // 实际值数据（柱状图高度）
+  // 实际值数据（柱状图）
   data: {
     type: Array,
     default: () => []
   },
-  // 目标值（用于计算达成率，决定柱子颜色）
+  // 计划值（并排柱）
   targets: {
     type: Array,
     default: () => []
@@ -33,41 +33,36 @@ let chartInstance = null
 
 // 生成日期标签
 const dayLabels = computed(() => {
+  const count = props.data.length
   if (props.isAccumulated) {
-    return ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月']
+    return Array.from({ length: count }, (_, i) => `${i + 1}期`)
   }
-  const count = Math.min(props.data.length, 15)
   return Array.from({ length: count }, (_, i) => `${i + 1}日`)
 })
 
 const getOption = () => {
   const actuals = props.data.map(d => typeof d === 'object' ? d.value : d)
   const targets = props.targets.length > 0 ? props.targets : props.data.map(() => 0)
-  
-  // 根据达成率决定柱子颜色
-  const getBarColor = (actual, target) => {
-    if (target <= 0) return '#38bdf8' // 蓝色 - 无目标数据
-    const rate = actual / target
-    if (rate >= 0.95) return '#22c55e' // 绿色 - 达标
-    if (rate >= 0.85) return '#eab308' // 黄色 - 接近
-    return '#ef4444' // 红色 - 未达标
-  }
-  
-  // 柱状图数据带颜色
-  const barData = actuals.map((value, i) => ({
-    value,
-    itemStyle: {
-      color: getBarColor(value, targets[i]),
-      borderRadius: [3, 3, 0, 0]
-    }
-  }))
+  const achievementRates = actuals.map((value, i) => {
+    const target = targets[i]
+    if (!target) return 0
+    return Number(((value / target) * 100).toFixed(1))
+  })
 
   return {
     grid: {
       left: 45,
-      right: 15,
-      top: 15,
-      bottom: 25
+      right: 42,
+      top: 28,
+      bottom: 45
+    },
+    legend: {
+      right: 5,
+      top: 0,
+      textStyle: { color: '#cbd5e1', fontSize: 10 },
+      itemHeight: 8,
+      itemWidth: 10,
+      data: ['计划值', '实际值', '达成率']
     },
     xAxis: {
       type: 'category',
@@ -81,51 +76,104 @@ const getOption = () => {
         show: true, 
         color: '#94a3b8', 
         fontSize: 11,
-        interval: 0  // 显示所有标签
+        interval: Math.max(0, Math.floor(dayLabels.value.length / 8))
       }
     },
-    yAxis: {
-      type: 'value',
-      axisLine: { show: false },
-      axisTick: { show: false },
-      splitLine: { 
-        show: true,
-        lineStyle: { color: 'rgba(51, 65, 85, 0.3)', type: 'dashed' } 
+    yAxis: [
+      {
+        type: 'value',
+        axisLine: { show: false },
+        axisTick: { show: false },
+        splitLine: { 
+          show: true,
+          lineStyle: { color: 'rgba(51, 65, 85, 0.3)', type: 'dashed' } 
+        },
+        axisLabel: { 
+          show: true, 
+          color: '#94a3b8', 
+          fontSize: 10,
+          formatter: (val) => {
+            if (val >= 1000000) return (val / 1000000).toFixed(0) + 'M'
+            if (val >= 10000) return (val / 10000).toFixed(0) + '万'
+            if (val >= 1000) return (val / 1000).toFixed(0) + 'K'
+            return val
+          }
+        }
       },
-      axisLabel: { 
-        show: true, 
-        color: '#94a3b8', 
-        fontSize: 10,
-        formatter: (val) => {
-          if (val >= 1000000) return (val / 1000000).toFixed(0) + 'M'
-          if (val >= 10000) return (val / 10000).toFixed(0) + '万'
-          if (val >= 1000) return (val / 1000).toFixed(0) + 'K'
-          return val
+      {
+        type: 'value',
+        axisLine: { show: false },
+        axisTick: { show: false },
+        splitLine: { show: false },
+        min: 0,
+        max: 150,
+        axisLabel: {
+          color: '#a5b4fc',
+          fontSize: 10,
+          formatter: '{value}%'
         }
       }
-    },
+    ],
+    dataZoom: [
+      {
+        type: 'inside',
+        xAxisIndex: 0,
+        start: dayLabels.value.length > 10 ? 45 : 0,
+        end: 100
+      },
+      {
+        type: 'slider',
+        xAxisIndex: 0,
+        start: dayLabels.value.length > 10 ? 45 : 0,
+        end: 100,
+        bottom: 10,
+        height: 12,
+        borderColor: '#1e293b',
+        backgroundColor: 'rgba(15, 23, 42, 0.75)',
+        fillerColor: 'rgba(56, 189, 248, 0.25)',
+        handleStyle: { color: '#38bdf8' },
+        moveHandleSize: 4
+      }
+    ],
     series: [
+      // 柱状图 - 计划值
+      {
+        name: '计划值',
+        type: 'bar',
+        data: targets,
+        barWidth: 8,
+        itemStyle: {
+          color: '#475569',
+          borderRadius: [3, 3, 0, 0]
+        }
+      },
       // 柱状图 - 实际值
       {
+        name: '实际值',
         type: 'bar',
-        data: barData,
-        barWidth: 12,
-        barCategoryGap: '30%'
-      },
-      // 折线图 - 趋势线（跟随实际值）
-      {
-        type: 'line',
         data: actuals,
+        barWidth: 8,
+        itemStyle: {
+          color: '#22d3ee',
+          borderRadius: [3, 3, 0, 0]
+        }
+      },
+      // 折线图 - 达成率
+      {
+        name: '达成率',
+        type: 'line',
+        yAxisIndex: 1,
+        data: achievementRates,
         symbol: 'circle',
         symbolSize: 4,
         lineStyle: {
-          color: '#38bdf8',
+          color: '#facc15',
           width: 2
         },
         itemStyle: {
-          color: '#38bdf8'
+          color: '#fde047'
         },
-        smooth: false
+        smooth: true
       }
     ],
     tooltip: {
@@ -135,8 +183,8 @@ const getOption = () => {
       textStyle: { color: '#e2e8f0', fontSize: 12 },
       formatter: (params) => {
         const day = params[0].axisValue
-        const actual = params[0].value
-        const target = targets[params[0].dataIndex] || 0
+        const target = params[0]?.value || 0
+        const actual = params[1]?.value || 0
         const rate = target > 0 ? ((actual / target) * 100).toFixed(1) : 0
         
         let actualStr = actual >= 10000 ? (actual / 10000).toFixed(1) + '万' : actual.toLocaleString()

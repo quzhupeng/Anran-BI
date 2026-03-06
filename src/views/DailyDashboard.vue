@@ -6,10 +6,13 @@
     <!-- 核心财务指标区 -->
     <CoreFinanceCards @drillDown="handleDrillDown" />
 
-    <!-- 过程与预警区 -->
+    <!-- 核心客户与预警区 -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-      <ProcessRadar />
-      <AlertCenter />
+      <CoreCustomerMetrics />
+      <AlertCenter
+        @open-report="$emit('open-report')"
+        @open-alert-config="$emit('open-alert-config')"
+      />
     </div>
 
     <!-- 移动端快捷操作 -->
@@ -59,12 +62,12 @@
 import { ref } from 'vue'
 import BSCOverview from '../components/daily/BSCOverview.vue'
 import CoreFinanceCards from '../components/daily/CoreFinanceCards.vue'
-import ProcessRadar from '../components/daily/ProcessRadar.vue'
+import CoreCustomerMetrics from '../components/daily/CoreCustomerMetrics.vue'
 import AlertCenter from '../components/daily/AlertCenter.vue'
 import DrillDownPanel from '../components/common/DrillDownPanel.vue'
 import TaskDispatchPanel from '../components/common/TaskDispatchPanel.vue'
 
-defineEmits(['open-chatbi', 'open-report', 'open-dispatch'])
+defineEmits(['open-chatbi', 'open-report', 'open-dispatch', 'open-alert-config'])
 
 const showDrillDownPanel = ref(false)
 const currentIndicator = ref(null)
@@ -81,13 +84,19 @@ const handleClosePanel = () => {
 }
 
 const handleCreateTask = (task) => {
+  const actualValue = task.actual ?? currentIndicator.value?.actual
+  const targetValue = task.target ?? currentIndicator.value?.target
+  const achievement = task.achievement ? Number(task.achievement) : ((actualValue / (targetValue || 1)) * 100)
   currentTaskData.value = {
     indicator: task.name || currentIndicator.value?.name,
-    currentValue: task.achievement ? task.achievement + '%' : 'N/A',
-    target: '100%',
-    gap: task.achievement ? ((task.achievement - 100).toFixed(1) + '%') : 'N/A',
+    currentValue: typeof actualValue === 'number' ? actualValue.toLocaleString() : 'N/A',
+    target: typeof targetValue === 'number' ? targetValue.toLocaleString() : 'N/A',
+    gap: `${(achievement - 100).toFixed(1)}%`,
+    department: '直销事业部',
+    owner: '张经理（华东区）',
     rootCause: '',
-    action: ''
+    action: '',
+    chartSnapshot: '当前组合图（计划值/实际值/达成率）'
   }
   showTaskPanel.value = true
 }

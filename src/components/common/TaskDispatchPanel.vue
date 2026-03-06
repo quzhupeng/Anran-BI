@@ -28,6 +28,21 @@
                 </div>
               </div>
             </div>
+
+            <div class="bg-primary-900/20 rounded-lg p-3 border border-primary-700/40">
+              <div class="text-xs text-primary-300 mb-1">🤖 智能带出</div>
+              <div class="text-xs text-dashboard-muted">
+                已自动带出问题指标、当前图表截图、责任部门/责任人建议。
+              </div>
+            </div>
+
+            <!-- 图表截图（自动带出） -->
+            <div class="bg-dashboard-dark/30 rounded-lg p-3 border border-dashed border-dashboard-border">
+              <label class="text-xs text-dashboard-muted mb-2 block">当前图表截图（自动关联）</label>
+              <div class="h-20 rounded bg-dashboard-dark/60 border border-dashboard-border flex items-center justify-center text-xs text-dashboard-muted">
+                {{ taskData.chartSnapshot || '当前组合图（计划值/实际值/达成率）' }}
+              </div>
+            </div>
             
             <!-- 关联根因 -->
             <div>
@@ -51,8 +66,19 @@
               ></textarea>
             </div>
             
-            <!-- 责任人选择 -->
+            <!-- 责任部门/责任人 -->
             <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="text-xs text-dashboard-muted mb-1 block">责任部门</label>
+                <select
+                  v-model="form.department"
+                  class="w-full bg-dashboard-dark/50 border border-dashboard-border rounded-lg px-3 py-2 text-sm text-dashboard-text"
+                >
+                  <option v-for="department in departmentOptions" :key="department.value" :value="department.value">
+                    {{ department.label }}
+                  </option>
+                </select>
+              </div>
               <div>
                 <label class="text-xs text-dashboard-muted mb-1 block">责任人</label>
                 <select 
@@ -65,8 +91,10 @@
                   </option>
                 </select>
               </div>
-              
-              <!-- 截止时间 -->
+            </div>
+
+            <!-- 截止时间 -->
+            <div class="grid grid-cols-2 gap-4">
               <div>
                 <label class="text-xs text-dashboard-muted mb-1 block">截止时间</label>
                 <input 
@@ -74,6 +102,13 @@
                   v-model="form.deadline"
                   class="w-full bg-dashboard-dark/50 border border-dashboard-border rounded-lg px-3 py-2 text-sm text-dashboard-text"
                 />
+              </div>
+              
+              <div>
+                <label class="text-xs text-dashboard-muted mb-1 block">同步状态</label>
+                <div class="h-[38px] rounded-lg border border-status-green/40 bg-status-green/10 flex items-center px-3 text-xs text-status-green">
+                  已与云栖任务系统打通，状态将自动同步
+                </div>
               </div>
             </div>
             
@@ -138,7 +173,10 @@ const props = defineProps({
       indicator: '',
       currentValue: '',
       target: '',
-      gap: ''
+      gap: '',
+      department: '直销事业部',
+      owner: '张经理（华东区）',
+      chartSnapshot: ''
     })
   }
 })
@@ -148,10 +186,18 @@ const emit = defineEmits(['update:visible', 'submit'])
 const form = reactive({
   rootCause: '',
   action: '',
-  owner: '',
+  department: 'directSales',
+  owner: 'zhangjl',
   deadline: getDefaultDeadline(),
   priority: 'medium'
 })
+
+const departmentOptions = [
+  { value: 'directSales', label: '直销事业部' },
+  { value: 'finance', label: '财务管理部' },
+  { value: 'operation', label: '运营管理部' },
+  { value: 'hr', label: '人力资源部' }
+]
 
 // 责任人选项
 const ownerOptions = [
@@ -182,6 +228,14 @@ watch(() => props.taskData, (newData) => {
   }
   if (newData.action) {
     form.action = newData.action
+  }
+  if (newData.department) {
+    const mappedDepartment = departmentOptions.find(item => item.label === newData.department || item.value === newData.department)
+    form.department = mappedDepartment?.value || form.department
+  }
+  if (newData.owner) {
+    const mappedOwner = ownerOptions.find(item => item.label === newData.owner || item.value === newData.owner)
+    form.owner = mappedOwner?.value || form.owner
   }
 }, { immediate: true })
 

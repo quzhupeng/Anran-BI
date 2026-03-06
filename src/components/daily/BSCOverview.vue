@@ -1,8 +1,8 @@
 <template>
   <div class="gradient-border p-4">
-    <h2 class="text-sm font-semibold text-dashboard-text mb-4 flex items-center gap-2">
+    <h2 class="text-base font-semibold text-dashboard-text mb-4 flex items-center gap-2 tracking-wide">
       <span>📊</span>
-      BSC 平衡计分卡综览
+      经营概览
     </h2>
 
     <!-- 桌面端：4列网格 -->
@@ -16,7 +16,7 @@
         <div class="flex items-center justify-between mb-3">
           <div class="flex items-center gap-2">
             <span class="text-lg">{{ dimensionIcons[key] }}</span>
-            <span class="text-sm font-medium text-dashboard-text">{{ dimensionNames[key] }}</span>
+            <span class="text-base font-semibold text-dashboard-text">{{ dimensionNames[key] }}</span>
           </div>
           <StatusLight
             :status="getDimensionStatus(dimension)"
@@ -29,13 +29,13 @@
           <div
             v-for="indicator in dimension.indicators"
             :key="indicator.id"
-            class="flex items-center justify-between text-xs"
+            class="flex items-center justify-between text-sm"
           >
             <span class="text-dashboard-muted truncate mr-2" style="max-width: 120px;">
               {{ indicator.name }}
             </span>
             <div class="flex items-center gap-2">
-              <span class="font-medium text-dashboard-text">
+              <span class="font-semibold text-dashboard-text text-base">
                 {{ formatValue(indicator) }}
               </span>
               <StatusLight
@@ -46,15 +46,6 @@
           </div>
         </div>
 
-        <!-- 维度权重 -->
-        <div class="mt-3 pt-2 border-t border-dashboard-border">
-          <div class="flex items-center justify-between text-xs">
-            <span class="text-dashboard-muted">权重合计</span>
-            <span class="text-primary-400 font-medium">
-              {{ getTotalWeight(dimension) }}%
-            </span>
-          </div>
-        </div>
       </div>
     </div>
 
@@ -70,7 +61,7 @@
           <div class="flex items-center justify-between mb-3">
             <div class="flex items-center gap-2">
               <span class="text-lg">{{ dimensionIcons[key] }}</span>
-              <span class="text-sm font-medium text-dashboard-text">{{ dimensionNames[key] }}</span>
+              <span class="text-sm font-semibold text-dashboard-text">{{ dimensionNames[key] }}</span>
             </div>
             <StatusLight
               :status="getDimensionStatus(dimension)"
@@ -89,7 +80,7 @@
                 {{ indicator.name }}
               </span>
               <div class="flex items-center gap-1">
-                <span class="font-medium text-dashboard-text text-xs">
+                <span class="font-semibold text-dashboard-text text-sm">
                   {{ formatValue(indicator) }}
                 </span>
                 <StatusLight
@@ -100,15 +91,6 @@
             </div>
           </div>
 
-          <!-- 维度权重 -->
-          <div class="mt-3 pt-2 border-t border-dashboard-border">
-            <div class="flex items-center justify-between text-xs">
-              <span class="text-dashboard-muted">权重</span>
-              <span class="text-primary-400 font-medium">
-                {{ getTotalWeight(dimension) }}%
-              </span>
-            </div>
-          </div>
         </div>
       </div>
     </div>
@@ -116,7 +98,6 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
 import StatusLight from '../common/StatusLight.vue'
 import { bscIndicators } from '../../composables/useMockData'
 
@@ -166,7 +147,4 @@ const getDimensionStatus = (dimension) => {
   return 'green'
 }
 
-const getTotalWeight = (dimension) => {
-  return dimension.indicators.reduce((sum, i) => sum + i.weight, 0)
-}
 </script>

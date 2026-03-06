@@ -3,23 +3,23 @@
     <div class="px-6 py-3 flex items-center justify-between">
       <!-- 左侧：筛选器组 -->
       <div class="flex items-center gap-6">
-        <!-- 时间周期 -->
+        <!-- 起止日期 -->
         <div class="filter-group">
-          <label class="text-xs text-dashboard-muted mb-1 block">时间周期</label>
-          <div class="flex bg-dashboard-dark/50 rounded-lg p-0.5 border border-dashboard-border">
-            <button
-              v-for="option in timeRangeOptions"
-              :key="option.value"
-              @click="setFilter('timeRange', option.value)"
-              class="px-3 py-1.5 text-xs rounded-md transition-all duration-200"
-              :class="[
-                state.timeRange === option.value 
-                  ? 'bg-primary-500 text-white shadow' 
-                  : 'text-dashboard-muted hover:text-dashboard-text hover:bg-dashboard-card'
-              ]"
-            >
-              {{ option.label }}
-            </button>
+          <label class="text-xs text-dashboard-muted mb-1 block">起止日期</label>
+          <div class="flex items-center gap-2 bg-dashboard-dark/50 rounded-lg border border-dashboard-border px-2 py-1.5">
+            <input
+              type="date"
+              :value="state.startDate"
+              @change="setFilter('startDate', $event.target.value)"
+              class="bg-transparent text-xs text-dashboard-text focus:outline-none"
+            />
+            <span class="text-dashboard-muted text-xs">至</span>
+            <input
+              type="date"
+              :value="state.endDate"
+              @change="setFilter('endDate', $event.target.value)"
+              class="bg-transparent text-xs text-dashboard-text focus:outline-none"
+            />
           </div>
         </div>
         
@@ -89,7 +89,6 @@ import { useGlobalFilter } from '../../composables/useGlobalFilter'
 
 const {
   state,
-  timeRangeOptions,
   businessSystemOptions,
   regionOptions,
   setFilter,
@@ -122,6 +121,11 @@ select {
   background-repeat: no-repeat;
   background-size: 1.5em 1.5em;
   padding-right: 2.5rem;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.8);
+  cursor: pointer;
 }
 
 @keyframes spin {

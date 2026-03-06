@@ -6,7 +6,7 @@ export const bscIndicators = {
     name: '财务维度',
     indicators: [
       { id: 'f1', name: '报单收入', weight: 25, target: 50000000, actual: 47500000, unit: '元' },
-      { id: 'f2', name: '利润达成率', weight: 5, target: 100, actual: 92.5, unit: '%' },
+      { id: 'f2', name: '利润', weight: 5, target: 13200000, actual: 12600000, unit: '元' },
       { id: 'f3', name: '线上营销收入', weight: 5, target: 8000000, actual: 8640000, unit: '元' }
     ]
   },
@@ -85,30 +85,30 @@ export const financeCardsData = {
     }
   },
   profit: {
-    name: '利润达成率',
+    name: '利润',
     currentMonth: {
-      actual: 92.5,
-      target: 100,
-      mom: -2.1,
-      yoy: 5.3,
-      trend: [95, 94, 93, 94.5, 93, 92.5],
+      actual: 12600000,
+      target: 13200000,
+      mom: -1.8,
+      yoy: 4.6,
+      trend: [11.6, 11.8, 12.1, 12.0, 12.2, 12.6],
       subMetrics: {
-        name: '毛利率',
-        actual: 38.5,
-        target: 42,
+        name: '利润达成率',
+        actual: 95.5,
+        target: 100,
         unit: '%'
       }
     },
     accumulated: {
-      actual: 95.2,
-      target: 100,
-      mom: 1.5,
-      yoy: 8.2,
-      trend: [92, 93, 94, 94.5, 95, 95.2],
+      actual: 75200000,
+      target: 78000000,
+      mom: 2.1,
+      yoy: 7.4,
+      trend: [62, 65, 68, 70, 72, 75.2],
       subMetrics: {
-        name: '毛利率',
-        actual: 40.2,
-        target: 42,
+        name: '利润达成率',
+        actual: 96.4,
+        target: 100,
         unit: '%'
       }
     }
@@ -132,11 +132,11 @@ export const processIndicators = {
 
 // 智能预警数据
 export const alertData = [
-  { id: 1, level: 'red', title: '新人经营率连续2月未达标', detail: '当前72.3%，目标85%', time: '2小时前', icon: '⚠️' },
-  { id: 2, level: 'yellow', title: '产成品库存周转天数逼近阈值', detail: '当前52天，目标≤45天', time: '5小时前', icon: '⚡' },
-  { id: 3, level: 'yellow', title: '潜质员工占比环比下降', detail: '从13.5%降至12.8%', time: '1天前', icon: '📊' },
-  { id: 4, level: 'red', title: '关键岗位人才储备率告急', detail: '当前68%，目标80%', time: '2天前', icon: '👥' },
-  { id: 5, level: 'yellow', title: '流程遵从率低于目标', detail: '当前91.2%，目标95%', time: '3天前', icon: '📋' }
+  { id: 1, level: 'red', title: '利润指标连续3天环比下降', detail: '最近3天利润由428万降至391万，触发连续下降规则', time: '2小时前', icon: '⚠️' },
+  { id: 2, level: 'yellow', title: '线上营销收入低于团队平均值15%', detail: '当前较同规模团队均值低16.8%，建议核查投放转化', time: '5小时前', icon: '⚡' },
+  { id: 3, level: 'yellow', title: '报单人数波动异常', detail: '近7日波动系数12.4%，高于预设阈值10%', time: '1天前', icon: '📊' },
+  { id: 4, level: 'red', title: '关键岗位人才储备率低于红线', detail: '连续2周低于70%，已触发组织韧性风险规则', time: '2天前', icon: '👥' },
+  { id: 5, level: 'yellow', title: '库存周转天数高于区域均值', detail: '当前52天，较区域均值高15.6%', time: '3天前', icon: '📋' }
 ]
 
 // 行动跟踪表数据（经营分析会模式）
