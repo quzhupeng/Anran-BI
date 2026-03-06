@@ -28,15 +28,13 @@
       </div>
       
       <div class="flex items-center gap-3">
-        <!-- 模式切换 -->
-        <button 
+        <button
           @click="$emit('toggle-mode')"
-          class="px-3 py-1.5 rounded-full text-xs font-medium transition-colors"
-          :class="isAnalysisMode ? 'bg-primary-600 text-white' : 'bg-dashboard-card text-dashboard-muted'"
+          class="px-3 py-1.5 rounded-lg border border-primary-500/40 bg-primary-500/15 text-primary-300 text-xs"
         >
-          {{ isAnalysisMode ? '分析会' : '看板' }}
+          经营分析会模式
         </button>
-        
+
         <!-- 更多操作 -->
         <button @click="showMoreMenu = true" class="p-2 text-dashboard-muted">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -17,6 +17,10 @@ const props = defineProps({
     type: Array,
     default: () => []
   },
+  labels: {
+    type: Array,
+    default: () => []
+  },
   height: {
     type: Number,
     default: 140
@@ -33,6 +37,9 @@ let chartInstance = null
 
 // 生成日期标签
 const dayLabels = computed(() => {
+  if (props.labels.length) {
+    return props.labels
+  }
   const count = props.data.length
   if (props.isAccumulated) {
     return Array.from({ length: count }, (_, i) => `${i + 1}期`)
@@ -118,13 +125,13 @@ const getOption = () => {
       {
         type: 'inside',
         xAxisIndex: 0,
-        start: dayLabels.value.length > 10 ? 45 : 0,
+        start: 0,
         end: 100
       },
       {
         type: 'slider',
         xAxisIndex: 0,
-        start: dayLabels.value.length > 10 ? 45 : 0,
+        start: 0,
         end: 100,
         bottom: 10,
         height: 12,
@@ -173,7 +180,7 @@ const getOption = () => {
         itemStyle: {
           color: '#fde047'
         },
-        smooth: true
+        smooth: false
       }
     ],
     tooltip: {
@@ -216,7 +223,7 @@ const handleResize = () => {
   chartInstance?.resize()
 }
 
-watch(() => [props.data, props.targets], () => {
+watch(() => [props.data, props.targets, props.labels], () => {
   if (chartInstance) {
     chartInstance.setOption(getOption())
   }

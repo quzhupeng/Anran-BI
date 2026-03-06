@@ -33,25 +33,16 @@
         </button>
       </div>
       
-      <!-- 右侧：模式切换与用户 -->
+      <!-- 右侧：模式入口与用户 -->
       <div class="flex items-center gap-3">
         <div class="flex items-center gap-2 text-sm">
-          <span :class="!isAnalysisMode ? 'text-primary-400 font-medium' : 'text-dashboard-muted'">
-            公司级经营驾驶舱
-          </span>
-          <button 
+          <span class="text-primary-400 font-medium">公司级经营驾驶舱</span>
+          <button
             @click="$emit('toggle-mode')"
-            class="relative w-14 h-7 rounded-full bg-dashboard-card border border-dashboard-border transition-colors"
-            :class="{ 'bg-primary-600 border-primary-500': isAnalysisMode }"
+            class="px-3 py-1.5 rounded-lg border border-primary-500/40 bg-primary-500/15 text-primary-300 hover:bg-primary-500/25 transition-colors"
           >
-            <span 
-              class="absolute top-1 left-1 w-5 h-5 rounded-full bg-white shadow transition-transform"
-              :class="{ 'translate-x-7': isAnalysisMode }"
-            ></span>
+            经营分析会模式
           </button>
-          <span :class="isAnalysisMode ? 'text-primary-400 font-medium' : 'text-dashboard-muted'">
-            经营分析会
-          </span>
         </div>
 
         <button
