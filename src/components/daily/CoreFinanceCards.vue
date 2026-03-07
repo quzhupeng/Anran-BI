@@ -6,7 +6,7 @@
       <span class="text-xs text-dashboard-muted font-normal ml-2 hidden sm:inline">置顶展示</span>
     </h2>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div class="grid grid-cols-1 gap-4">
       <!-- 报单收入卡片 -->
       <KpiCard
         title="报单收入"
@@ -33,7 +33,7 @@
       />
 
       <button
-        class="min-h-[256px] rounded-lg border border-dashed border-primary-500/50 bg-primary-900/10 hover:bg-primary-900/20 transition-colors flex items-center justify-center"
+        class="min-h-[220px] rounded-lg border border-dashed border-primary-500/50 bg-primary-900/10 hover:bg-primary-900/20 transition-colors flex items-center justify-center"
       >
         <div class="text-center">
           <div class="text-3xl text-primary-300 leading-none">+</div>

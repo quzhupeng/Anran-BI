@@ -42,21 +42,21 @@
     
     <!-- 柱状图+折线组合图表 + 右侧扩展图 -->
     <div
-      :class="showAuxChart ? 'grid grid-cols-1 lg:grid-cols-[1fr_190px] gap-3 items-stretch' : ''"
+      :class="showAuxChart ? 'grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_280px] gap-3 items-stretch' : ''"
     >
-      <div class="h-36">
+      <div class="h-52">
         <ComboBarChart
           :data="dailyData"
           :targets="dailyTargets"
           :labels="dateLabels"
-          :height="136"
+          :height="204"
           :isAccumulated="daysInRange > 31"
         />
       </div>
 
       <div
         v-if="showRegionRank"
-        class="h-36 rounded-lg border border-dashboard-border bg-dashboard-dark/35 p-2"
+        class="h-52 rounded-lg border border-dashboard-border bg-dashboard-dark/35 p-3"
       >
         <div class="text-[11px] text-dashboard-muted mb-1">区域达成排名</div>
         <RegionCompletionRank :data="regionCompletionData" />
@@ -64,7 +64,7 @@
 
       <div
         v-else-if="showMarketingFunnel"
-        class="h-36 rounded-lg border border-dashboard-border bg-dashboard-dark/35 p-2"
+        class="h-52 rounded-lg border border-dashboard-border bg-dashboard-dark/35 p-3"
       >
         <div class="text-[11px] text-dashboard-muted mb-1">营销漏斗（流量→成交）</div>
         <MarketingFunnelChart :data="marketingFunnelData" />
