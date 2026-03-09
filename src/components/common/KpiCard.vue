@@ -107,7 +107,7 @@
         v-if="showRegionRank"
         class="h-80 rounded-lg border border-dashboard-border bg-dashboard-dark/35 p-5"
       >
-        <div class="text-sm font-medium text-dashboard-muted mb-3">区域达成排名</div>
+        <div class="text-xl font-bold text-dashboard-text mb-4">区域达成排名</div>
         <RegionCompletionRank :data="regionCompletionData" />
       </div>
 
@@ -116,7 +116,7 @@
         v-else-if="showChannelPie"
         class="h-80 rounded-lg border border-dashboard-border bg-dashboard-dark/35 p-5"
       >
-        <div class="text-sm font-medium text-dashboard-muted mb-3">渠道贡献分析</div>
+        <div class="text-xl font-bold text-dashboard-text mb-4">渠道贡献分析</div>
         <ChannelPieChart :data="channelContributionData" />
       </div>
 
@@ -125,7 +125,7 @@
         v-else-if="showExpenseBudget"
         class="h-80 rounded-lg border border-dashboard-border bg-dashboard-dark/35 p-5"
       >
-        <div class="text-sm font-medium text-dashboard-muted mb-3">主要费用项预算执行情况</div>
+        <div class="text-xl font-bold text-dashboard-text mb-4">主要费用项预算执行情况</div>
         <ExpenseBudgetChart :data="expenseBudgetData" />
       </div>
     </div>
