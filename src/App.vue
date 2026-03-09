@@ -40,12 +40,18 @@
         <DailyDashboard
           v-if="!isAnalysisMode"
           key="daily"
+          :homeLayout="homeLayout"
           @open-chatbi="showChatBI = true"
           @open-report="showReportGenerator = true"
           @open-dispatch="showTaskDispatch = true"
           @open-alert-config="showAlertConfig = true"
         />
-        <AnalysisDashboard v-else key="analysis" @exit="toggleMode" />
+        <EnhancedAnalysisDashboard
+          v-else
+          key="enhanced-analysis"
+          @exit="toggleMode"
+          @open-chatbi="showChatBI = true"
+        />
       </transition>
     </main>
 
@@ -61,8 +67,9 @@
       :taskData="defaultTaskData"
     />
 
-    <HomeCustomizerPanel
+    <AdvancedHomeCustomizer
       v-model:visible="showHomeCustomizer"
+      :initialLayout="homeLayout"
       @saved="handleHomeLayoutSaved"
     />
 
@@ -94,19 +101,20 @@
 </template>
 
 <script setup>
-import { ref, reactive, onUnmounted } from 'vue'
+import { ref, reactive, onMounted, onUnmounted } from 'vue'
 import TopActionBar from './components/layout/TopActionBar.vue'
 import MobileNav from './components/layout/MobileNav.vue'
 import MobileFilter from './components/layout/MobileFilter.vue'
 import GlobalFilter from './components/layout/GlobalFilter.vue'
 import DailyDashboard from './views/DailyDashboard.vue'
-import AnalysisDashboard from './views/AnalysisDashboard.vue'
+import EnhancedAnalysisDashboard from './views/EnhancedAnalysisDashboard.vue'
 import ChatBI from './components/common/ChatBI.vue'
 import ReportGenerator from './components/common/ReportGenerator.vue'
 import TaskDispatchPanel from './components/common/TaskDispatchPanel.vue'
-import HomeCustomizerPanel from './components/common/HomeCustomizerPanel.vue'
+import AdvancedHomeCustomizer from './components/common/AdvancedHomeCustomizer.vue'
 import FeedbackPanel from './components/common/FeedbackPanel.vue'
 import AlertConfigPanel from './components/common/AlertConfigPanel.vue'
+import { cloneHomeLayout, defaultHomeLayout, homeLayoutStorageKey } from './utils/homeLayout'
 
 const isAnalysisMode = ref(false)
 const showChatBI = ref(false)
@@ -118,6 +126,7 @@ const showHomeCustomizer = ref(false)
 const showFeedback = ref(false)
 const showAlertConfig = ref(false)
 const appNotice = ref('')
+const homeLayout = ref(cloneHomeLayout(defaultHomeLayout))
 let noticeTimer = null
 
 const defaultTaskData = reactive({
@@ -151,7 +160,9 @@ const handleFeedback = () => {
 }
 
 const handleHomeLayoutSaved = (layout) => {
-  showNotice(`首页布局已保存（${layout.length}个模块）`)
+  homeLayout.value = cloneHomeLayout(layout)
+  localStorage.setItem(homeLayoutStorageKey, JSON.stringify(homeLayout.value))
+  showNotice(`自定义首页已保存（${layout.items?.length || 0}个组件，${layout.grid?.cols}×${layout.grid?.rows}网格）`)
 }
 
 const handleFeedbackSubmitted = (feedback) => {
@@ -171,6 +182,20 @@ const showNotice = (message) => {
     appNotice.value = ''
   }, 2200)
 }
+
+onMounted(() => {
+  try {
+    const savedLayout = localStorage.getItem(homeLayoutStorageKey)
+    if (!savedLayout) return
+
+    const parsedLayout = JSON.parse(savedLayout)
+    if (parsedLayout?.items?.length) {
+      homeLayout.value = cloneHomeLayout(parsedLayout)
+    }
+  } catch (error) {
+    console.warn('Failed to restore home layout:', error)
+  }
+})
 
 onUnmounted(() => {
   if (noticeTimer) {

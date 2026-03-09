@@ -3,30 +3,30 @@
     <div class="px-6 py-3 flex items-center justify-between">
       <!-- 左侧：筛选器组 -->
       <div class="flex items-center gap-6">
-        <!-- 起止日期 -->
+        <!-- 起止月份 -->
         <div class="filter-group">
-          <label class="text-xs text-dashboard-muted mb-1 block">起止日期</label>
+          <label class="text-xs text-dashboard-muted mb-1 block">起止月份</label>
           <div class="flex items-center gap-2 bg-dashboard-dark/50 rounded-lg border border-dashboard-border px-2 py-1.5">
             <input
-              type="date"
-              :value="state.startDate"
-              @change="setFilter('startDate', $event.target.value)"
+              type="month"
+              :value="state.startMonth"
+              @change="setFilter('startMonth', $event.target.value)"
               class="bg-transparent text-xs text-dashboard-text focus:outline-none"
             />
             <span class="text-dashboard-muted text-xs">至</span>
             <input
-              type="date"
-              :value="state.endDate"
-              @change="setFilter('endDate', $event.target.value)"
+              type="month"
+              :value="state.endMonth"
+              @change="setFilter('endMonth', $event.target.value)"
               class="bg-transparent text-xs text-dashboard-text focus:outline-none"
             />
           </div>
         </div>
-        
+
         <!-- 业务体系 -->
         <div class="filter-group">
           <label class="text-xs text-dashboard-muted mb-1 block">业务体系</label>
-          <select 
+          <select
             :value="state.businessSystem"
             @change="setFilter('businessSystem', $event.target.value)"
             class="bg-dashboard-dark/50 border border-dashboard-border rounded-lg px-3 py-1.5 text-sm text-dashboard-text appearance-none cursor-pointer hover:border-primary-500/50 transition-colors min-w-[120px]"
@@ -36,11 +36,11 @@
             </option>
           </select>
         </div>
-        
-        <!-- 大区选择 -->
+
+        <!-- 业务部 -->
         <div class="filter-group">
-          <label class="text-xs text-dashboard-muted mb-1 block">大区</label>
-          <select 
+          <label class="text-xs text-dashboard-muted mb-1 block">业务部</label>
+          <select
             :value="state.region"
             @change="setFilter('region', $event.target.value)"
             class="bg-dashboard-dark/50 border border-dashboard-border rounded-lg px-3 py-1.5 text-sm text-dashboard-text appearance-none cursor-pointer hover:border-primary-500/50 transition-colors min-w-[100px]"
@@ -51,7 +51,7 @@
           </select>
         </div>
       </div>
-      
+
       <!-- 右侧：操作按钮 -->
       <div class="flex items-center gap-3">
         <!-- 当前筛选条件显示 -->
@@ -59,9 +59,9 @@
           <span>当前视图:</span>
           <span class="text-primary-400">{{ getFilterDescription }}</span>
         </div>
-        
+
         <!-- 刷新按钮 -->
-        <button 
+        <button
           @click="handleRefresh"
           class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-dashboard-dark/50 border border-dashboard-border text-sm text-dashboard-muted hover:text-dashboard-text hover:border-primary-500/50 transition-all"
           :disabled="isRefreshing"
@@ -69,9 +69,9 @@
           <span :class="{ 'animate-spin-slow': isRefreshing }">🔄</span>
           <span>{{ isRefreshing ? '刷新中...' : '刷新' }}</span>
         </button>
-        
+
         <!-- 重置按钮 -->
-        <button 
+        <button
           @click="handleReset"
           class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-dashboard-muted hover:text-dashboard-text transition-all"
         >
@@ -102,7 +102,6 @@ const isRefreshing = ref(false)
 const handleRefresh = () => {
   isRefreshing.value = true
   refreshAll()
-  // 模拟刷新动画
   setTimeout(() => {
     isRefreshing.value = false
   }, 800)
@@ -123,7 +122,7 @@ select {
   padding-right: 2.5rem;
 }
 
-input[type="date"]::-webkit-calendar-picker-indicator {
+input[type="month"]::-webkit-calendar-picker-indicator {
   filter: invert(0.8);
   cursor: pointer;
 }

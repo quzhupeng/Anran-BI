@@ -1,32 +1,45 @@
 // 全局筛选状态管理
 import { reactive, readonly, computed } from 'vue'
 
-const getDefaultDateRange = () => {
-  const end = new Date()
-  const start = new Date()
-  start.setDate(end.getDate() - 29)
-  const formatDate = (date) => date.toISOString().split('T')[0]
+const computeEndDate = (monthStr) => {
+  const [year, month] = monthStr.split('-').map(Number)
+  const lastDay = new Date(year, month, 0).getDate()
+  return `${monthStr}-${String(lastDay).padStart(2, '0')}`
+}
+
+const getDefaultMonthRange = () => {
+  const now = new Date()
+  const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
   return {
-    startDate: formatDate(start),
-    endDate: formatDate(end)
+    startMonth: currentMonth,
+    endMonth: currentMonth
   }
 }
 
-const defaultRange = getDefaultDateRange()
+const defaultRange = getDefaultMonthRange()
 
 // 全局筛选状态
 const state = reactive({
-  // 时间周期
-  timeRange: 'custom', // 保留字段兼容移动端筛选
-  startDate: defaultRange.startDate,
-  endDate: defaultRange.endDate,
+  // 时间周期（按月）
+  timeRange: 'custom',
+  startMonth: defaultRange.startMonth,
+  endMonth: defaultRange.endMonth,
+  // 兼容旧字段 - 自动从月份计算
+  startDate: defaultRange.startMonth + '-01',
+  endDate: computeEndDate(defaultRange.endMonth),
   // 业务体系
-  businessSystem: 'all', // all | diamond | huaqi | innovation
-  // 大区
-  region: 'all', // all | east | south | north | central | southwest | northwest | northeast
+  businessSystem: 'all',
+  // 业务部（大区）
+  region: 'all',
   // 数据刷新时间戳
   lastRefresh: Date.now()
 })
+
+// 同步月份到日期
+const syncDatesFromMonths = () => {
+  state.startDate = state.startMonth + '-01'
+  state.endDate = computeEndDate(state.endMonth)
+}
 
 // 时间周期选项
 export const timeRangeOptions = [
@@ -42,20 +55,36 @@ export const businessSystemOptions = [
   { value: 'all', label: '全部体系' },
   { value: 'diamond', label: '钻石体系' },
   { value: 'huaqi', label: '华旗体系' },
-  { value: 'innovation', label: '创新业务' }
+  { value: 'qili', label: '齐力体系' },
+  { value: 'zhonghe', label: '众合体系' }
 ]
 
-// 大区选项
+// 业务部选项
 export const regionOptions = [
-  { value: 'all', label: '全国' },
-  { value: 'east', label: '华东区' },
-  { value: 'south', label: '华南区' },
-  { value: 'north', label: '华北区' },
-  { value: 'central', label: '华中区' },
-  { value: 'southwest', label: '西南区' },
-  { value: 'northwest', label: '西北区' },
-  { value: 'northeast', label: '东北区' }
+  { value: 'all', label: '全部' },
+  { value: 'east', label: '华东' },
+  { value: 'south', label: '华南' },
+  { value: 'north', label: '华北' }
 ]
+
+// 获取筛选月份范围内的月数
+export const getMonthsInRange = () => {
+  const [startYear, startMonth] = state.startMonth.split('-').map(Number)
+  const [endYear, endMonth] = state.endMonth.split('-').map(Number)
+  return (endYear - startYear) * 12 + (endMonth - startMonth) + 1
+}
+
+// 获取筛选范围内的月份标签列表
+export const getMonthLabels = () => {
+  const [startYear, startMonth] = state.startMonth.split('-').map(Number)
+  const count = getMonthsInRange()
+  const labels = []
+  for (let i = 0; i < count; i++) {
+    const m = ((startMonth - 1 + i) % 12) + 1
+    labels.push(`${m}月`)
+  }
+  return labels
+}
 
 // 修改筛选条件
 export const setFilter = (key, value) => {
@@ -65,12 +94,20 @@ export const setFilter = (key, value) => {
         state[field] = key[field]
       }
     })
+    // 同步日期
+    if ('startMonth' in key || 'endMonth' in key) {
+      syncDatesFromMonths()
+    }
     state.lastRefresh = Date.now()
     return
   }
 
   if (key in state) {
     state[key] = value
+    // 同步日期
+    if (key === 'startMonth' || key === 'endMonth') {
+      syncDatesFromMonths()
+    }
     state.lastRefresh = Date.now()
   }
 }
@@ -82,12 +119,13 @@ export const refreshAll = () => {
 
 // 重置筛选条件
 export const resetFilters = () => {
-  const range = getDefaultDateRange()
+  const range = getDefaultMonthRange()
   state.timeRange = 'custom'
-  state.startDate = range.startDate
-  state.endDate = range.endDate
+  state.startMonth = range.startMonth
+  state.endMonth = range.endMonth
   state.businessSystem = 'all'
   state.region = 'all'
+  syncDatesFromMonths()
   state.lastRefresh = Date.now()
 }
 
@@ -95,7 +133,10 @@ export const resetFilters = () => {
 export const getFilterDescription = computed(() => {
   const systemLabel = businessSystemOptions.find(o => o.value === state.businessSystem)?.label || ''
   const regionLabel = regionOptions.find(o => o.value === state.region)?.label || ''
-  return `${state.startDate} 至 ${state.endDate} | ${systemLabel} | ${regionLabel}`
+  const monthRange = state.startMonth === state.endMonth
+    ? state.startMonth
+    : `${state.startMonth} 至 ${state.endMonth}`
+  return `${monthRange} | ${systemLabel} | ${regionLabel}`
 })
 
 // 导出只读状态和方法
@@ -110,6 +151,8 @@ export const useGlobalFilter = () => {
     setFilter,
     refreshAll,
     resetFilters,
-    getFilterDescription
+    getFilterDescription,
+    getMonthsInRange,
+    getMonthLabels
   }
 }

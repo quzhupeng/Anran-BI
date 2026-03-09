@@ -1,18 +1,24 @@
 <template>
   <div class="space-y-4 animate-fade-in">
-    <!-- BSC扁平化综览区 -->
-    <BSCOverview />
-
-    <!-- 核心财务指标区 -->
-    <CoreFinanceCards @drillDown="handleDrillDown" />
-
-    <!-- 核心客户与预警区 -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-      <CoreCustomerMetrics />
-      <AlertCenter
-        @open-report="$emit('open-report')"
-        @open-alert-config="$emit('open-alert-config')"
-      />
+    <div class="overflow-x-auto pb-2">
+      <div
+        class="grid gap-4"
+        :style="homeGridStyle"
+      >
+        <div
+          v-for="item in normalizedHomeLayout.items"
+          :key="`${item.componentId}-${item.cellId}`"
+          class="min-w-0"
+          :style="getLayoutItemStyle(item)"
+        >
+          <HomeLayoutBlock
+            :item="item"
+            @drill-down="handleDrillDown"
+            @open-report="$emit('open-report')"
+            @open-alert-config="$emit('open-alert-config')"
+          />
+        </div>
+      </div>
     </div>
 
     <!-- 移动端快捷操作 -->
@@ -59,13 +65,18 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import BSCOverview from '../components/daily/BSCOverview.vue'
-import CoreFinanceCards from '../components/daily/CoreFinanceCards.vue'
-import CoreCustomerMetrics from '../components/daily/CoreCustomerMetrics.vue'
-import AlertCenter from '../components/daily/AlertCenter.vue'
+import { computed, ref } from 'vue'
 import DrillDownPanel from '../components/common/DrillDownPanel.vue'
 import TaskDispatchPanel from '../components/common/TaskDispatchPanel.vue'
+import HomeLayoutBlock from '../components/daily/HomeLayoutBlock.vue'
+import { cloneHomeLayout, defaultHomeLayout } from '../utils/homeLayout'
+
+const props = defineProps({
+  homeLayout: {
+    type: Object,
+    default: () => cloneHomeLayout(defaultHomeLayout)
+  }
+})
 
 defineEmits(['open-chatbi', 'open-report', 'open-dispatch', 'open-alert-config'])
 
@@ -73,6 +84,40 @@ const showDrillDownPanel = ref(false)
 const currentIndicator = ref(null)
 const showTaskPanel = ref(false)
 const currentTaskData = ref({})
+
+const normalizedHomeLayout = computed(() => {
+  const sourceLayout = props.homeLayout?.items?.length ? props.homeLayout : defaultHomeLayout
+
+  return {
+    grid: {
+      cols: sourceLayout.grid?.cols || defaultHomeLayout.grid.cols,
+      rows: sourceLayout.grid?.rows || defaultHomeLayout.grid.rows
+    },
+    items: [...(sourceLayout.items || [])]
+      .map(item => {
+        const [col = 0, row = 0] = (item.cellId || '0,0').split(',').map(Number)
+        return {
+          ...item,
+          col,
+          row,
+          width: item.width || 1,
+          height: item.height || 1
+        }
+      })
+      .sort((left, right) => (left.row - right.row) || (left.col - right.col))
+  }
+})
+
+const homeGridStyle = computed(() => ({
+  gridTemplateColumns: `repeat(${normalizedHomeLayout.value.grid.cols}, minmax(220px, 1fr))`,
+  gridTemplateRows: `repeat(${normalizedHomeLayout.value.grid.rows}, minmax(120px, auto))`,
+  minWidth: `${Math.max(960, normalizedHomeLayout.value.grid.cols * 240)}px`
+}))
+
+const getLayoutItemStyle = (item) => ({
+  gridColumn: `${item.col + 1} / span ${item.width}`,
+  gridRow: `${item.row + 1} / span ${item.height}`
+})
 
 const handleDrillDown = (data) => {
   currentIndicator.value = data

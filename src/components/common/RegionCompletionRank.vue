@@ -41,6 +41,7 @@ const getOption = () => {
     yAxis: {
       type: 'category',
       data: sorted.map((item) => item.name),
+      inverse: true,
       axisLabel: {
         color: '#cbd5e1',
         fontSize: 11

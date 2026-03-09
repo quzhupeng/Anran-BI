@@ -25,23 +25,30 @@
         </div>
 
         <!-- 指标列表 -->
-        <div class="space-y-2">
+        <div class="space-y-2.5">
           <div
             v-for="indicator in dimension.indicators"
             :key="indicator.id"
-            class="flex items-center justify-between text-sm"
+            class="group relative flex items-center justify-between"
           >
-            <span class="text-dashboard-muted truncate mr-2" style="max-width: 120px;">
+            <span class="text-base font-medium text-dashboard-muted truncate mr-2" style="max-width: 140px;">
               {{ indicator.name }}
             </span>
             <div class="flex items-center gap-2">
-              <span class="font-semibold text-dashboard-text text-base">
+              <span class="font-semibold text-dashboard-text text-lg">
                 {{ formatValue(indicator) }}
               </span>
               <StatusLight
                 :status="getIndicatorStatus(indicator)"
                 :title="`${indicator.actual}/${indicator.target}`"
               />
+            </div>
+            <!-- 悬浮提示 -->
+            <div class="absolute left-0 -top-10 z-50 hidden group-hover:block bg-dashboard-dark border border-dashboard-border rounded-lg px-3 py-2 shadow-lg whitespace-nowrap text-xs">
+              <span class="text-dashboard-muted">目标值：</span>
+              <span class="text-primary-300 font-medium">{{ formatTargetValue(indicator) }}</span>
+              <span class="text-dashboard-muted ml-2">达成率：</span>
+              <span class="font-medium" :class="getAchievementClass(indicator)">{{ formatAchievement(indicator) }}</span>
             </div>
           </div>
         </div>
@@ -74,7 +81,7 @@
             <div
               v-for="indicator in dimension.indicators"
               :key="indicator.id"
-              class="flex items-center justify-between text-xs"
+              class="group relative flex items-center justify-between text-xs"
             >
               <span class="text-dashboard-muted truncate mr-1" style="max-width: 90px;">
                 {{ indicator.name }}
@@ -87,6 +94,13 @@
                   :status="getIndicatorStatus(indicator)"
                   size="small"
                 />
+              </div>
+              <!-- 悬浮提示 -->
+              <div class="absolute left-0 -top-10 z-50 hidden group-hover:block bg-dashboard-dark border border-dashboard-border rounded-lg px-3 py-2 shadow-lg whitespace-nowrap text-xs">
+                <span class="text-dashboard-muted">目标值：</span>
+                <span class="text-primary-300 font-medium">{{ formatTargetValue(indicator) }}</span>
+                <span class="text-dashboard-muted ml-2">达成率：</span>
+                <span class="font-medium" :class="getAchievementClass(indicator)">{{ formatAchievement(indicator) }}</span>
               </div>
             </div>
           </div>
@@ -125,6 +139,37 @@ const formatValue = (indicator) => {
     return (indicator.actual / 10000).toFixed(1) + '万'
   }
   return indicator.actual.toLocaleString()
+}
+
+const formatTargetValue = (indicator) => {
+  if (indicator.unit === '%') {
+    return `${indicator.target}%`
+  }
+  if (indicator.target >= 100000000) {
+    return (indicator.target / 100000000).toFixed(2) + '亿'
+  }
+  if (indicator.target >= 10000) {
+    return (indicator.target / 10000).toFixed(1) + '万'
+  }
+  return indicator.target.toLocaleString()
+}
+
+const formatAchievement = (indicator) => {
+  const rate = (indicator.actual / indicator.target * 100).toFixed(1)
+  return `${rate}%`
+}
+
+const getAchievementClass = (indicator) => {
+  const rate = indicator.actual / indicator.target
+  const inverse = indicator.inverse
+  if (inverse) {
+    if (rate <= 1) return 'text-status-green'
+    if (rate <= 1.15) return 'text-status-yellow'
+    return 'text-status-red'
+  }
+  if (rate >= 0.95) return 'text-status-green'
+  if (rate >= 0.85) return 'text-status-yellow'
+  return 'text-status-red'
 }
 
 const getIndicatorStatus = (indicator) => {

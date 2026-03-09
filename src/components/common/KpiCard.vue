@@ -19,7 +19,27 @@
         悬浮查看目标/达成率
       </span>
     </div>
-    
+
+    <!-- 模块内日期筛选器（报单收入、线上营销收入） -->
+    <div v-if="showModuleDatePicker" class="flex items-center gap-2 mb-3">
+      <label class="text-xs text-dashboard-muted">日期范围：</label>
+      <div class="flex items-center gap-1.5 bg-dashboard-dark/50 rounded-lg border border-dashboard-border px-2 py-1">
+        <input
+          type="date"
+          :value="moduleStartDate"
+          @change="moduleStartDate = $event.target.value"
+          class="bg-transparent text-xs text-dashboard-text focus:outline-none w-[110px]"
+        />
+        <span class="text-dashboard-muted text-xs">至</span>
+        <input
+          type="date"
+          :value="moduleEndDate"
+          @change="moduleEndDate = $event.target.value"
+          class="bg-transparent text-xs text-dashboard-text focus:outline-none w-[110px]"
+        />
+      </div>
+    </div>
+
     <!-- 主要数值 -->
     <div class="mb-3">
       <div class="flex items-baseline gap-2">
@@ -39,13 +59,40 @@
         </span>
       </div>
     </div>
-    
-    <!-- 柱状图+折线组合图表 + 右侧扩展图 -->
+
+    <!-- 图表区域 -->
     <div
-      :class="showAuxChart ? 'grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_280px] gap-3 items-stretch' : ''"
+      :class="showAuxChart ? 'grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_360px] gap-4 items-stretch' : ''"
     >
-      <div class="h-52">
+      <!-- 左侧主图表 -->
+      <div class="h-64">
+        <!-- 报单收入：仅实际值柱状图 -->
         <ComboBarChart
+          v-if="chartMode === 'actual-only'"
+          :data="moduleDailyData"
+          :targets="[]"
+          :labels="moduleDateLabels"
+          :height="204"
+          :hideTargetAndRate="true"
+        />
+        <!-- 线上营销收入：每日面积图 -->
+        <DailyAreaChart
+          v-else-if="chartMode === 'area'"
+          :data="moduleDailyData"
+          :labels="moduleDateLabels"
+          :height="204"
+        />
+        <!-- 利润：月度目标达成趋势图 -->
+        <ComboBarChart
+          v-else-if="chartMode === 'monthly'"
+          :data="monthlyActuals"
+          :targets="monthlyTargets"
+          :labels="monthLabels"
+          :height="204"
+        />
+        <!-- 默认 -->
+        <ComboBarChart
+          v-else
           :data="dailyData"
           :targets="dailyTargets"
           :labels="dateLabels"
@@ -54,6 +101,8 @@
         />
       </div>
 
+      <!-- 右侧辅助图表 -->
+      <!-- 报单收入：区域达成排名 -->
       <div
         v-if="showRegionRank"
         class="h-52 rounded-lg border border-dashboard-border bg-dashboard-dark/35 p-3"
@@ -62,15 +111,25 @@
         <RegionCompletionRank :data="regionCompletionData" />
       </div>
 
+      <!-- 线上营销收入：渠道贡献分析 -->
       <div
-        v-else-if="showMarketingFunnel"
+        v-else-if="showChannelPie"
         class="h-52 rounded-lg border border-dashboard-border bg-dashboard-dark/35 p-3"
       >
-        <div class="text-[11px] text-dashboard-muted mb-1">营销漏斗（流量→成交）</div>
-        <MarketingFunnelChart :data="marketingFunnelData" />
+        <div class="text-[11px] text-dashboard-muted mb-1">渠道贡献分析</div>
+        <ChannelPieChart :data="channelContributionData" />
+      </div>
+
+      <!-- 利润：费用预算执行 -->
+      <div
+        v-else-if="showExpenseBudget"
+        class="h-52 rounded-lg border border-dashboard-border bg-dashboard-dark/35 p-3"
+      >
+        <div class="text-[11px] text-dashboard-muted mb-1">主要费用项预算执行情况</div>
+        <ExpenseBudgetChart :data="expenseBudgetData" />
       </div>
     </div>
-    
+
     <!-- 子指标 -->
     <div v-if="currentSubMetric" class="mt-3 pt-3 border-t border-dashboard-border">
       <div class="flex items-center justify-between">
@@ -89,11 +148,13 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import StatusLight from './StatusLight.vue'
 import ComboBarChart from './ComboBarChart.vue'
+import DailyAreaChart from './DailyAreaChart.vue'
 import RegionCompletionRank from './RegionCompletionRank.vue'
-import MarketingFunnelChart from './MarketingFunnelChart.vue'
+import ChannelPieChart from './ChannelPieChart.vue'
+import ExpenseBudgetChart from './ExpenseBudgetChart.vue'
 import { useGlobalFilter } from '../../composables/useGlobalFilter'
 
 const props = defineProps({
@@ -105,8 +166,39 @@ const props = defineProps({
   subMetric: Object
 })
 
-const { state } = useGlobalFilter()
+const { state, getMonthsInRange, getMonthLabels } = useGlobalFilter()
 
+// ---------- 模块内日期筛选器 ----------
+const showModuleDatePicker = computed(() => props.title === '报单收入' || props.title === '线上营销收入')
+
+const getDefaultModuleDates = () => {
+  const end = new Date()
+  const start = new Date()
+  start.setDate(end.getDate() - 29)
+  const fmt = (d) => d.toISOString().split('T')[0]
+  return { start: fmt(start), end: fmt(end) }
+}
+
+const defaultModuleDates = getDefaultModuleDates()
+const moduleStartDate = ref(defaultModuleDates.start)
+const moduleEndDate = ref(defaultModuleDates.end)
+
+const moduleDaysInRange = computed(() => {
+  const s = new Date(moduleStartDate.value)
+  const e = new Date(moduleEndDate.value)
+  const diff = Math.floor((e - s) / (1000 * 60 * 60 * 24)) + 1
+  return Math.max(1, Math.min(366, Number.isNaN(diff) ? 30 : diff))
+})
+
+const moduleDateLabels = computed(() => {
+  return Array.from({ length: moduleDaysInRange.value }, (_, index) => {
+    const date = new Date(moduleStartDate.value)
+    date.setDate(date.getDate() + index)
+    return `${date.getMonth() + 1}/${date.getDate()}`
+  })
+})
+
+// ---------- 全局筛选日期范围（兼容旧逻辑） ----------
 const normalizeDate = (dateString, fallback) => {
   const date = new Date(dateString)
   return Number.isNaN(date.getTime()) ? fallback : date
@@ -134,6 +226,15 @@ const dateLabels = computed(() => {
   })
 })
 
+// ---------- 图表模式 ----------
+const chartMode = computed(() => {
+  if (props.title === '报单收入') return 'actual-only'
+  if (props.title === '线上营销收入') return 'area'
+  if (props.title === '利润') return 'monthly'
+  return 'default'
+})
+
+// ---------- 数据计算 ----------
 const currentData = computed(() => (daysInRange.value > 31 ? props.accumulatedData : props.monthData) || props.monthData || props.accumulatedData)
 
 const actual = computed(() => currentData.value?.actual || 0)
@@ -155,28 +256,24 @@ const titleSeed = computed(() => {
 })
 
 const targetCurve = computed(() => {
-  const days = daysInRange.value
+  const days = showModuleDatePicker.value ? moduleDaysInRange.value : daysInRange.value
   const seed = titleSeed.value
   const baseTarget = target.value
   const dayBase = baseTarget / days
   const weeklyDistribution = [0.84, 0.9, 0.98, 1.05, 1.15, 1.1, 0.98]
-
   const rawFactors = []
   for (let i = 0; i < days; i++) {
     const weeklyFactor = weeklyDistribution[i % 7]
     const waveFactor = 1 + 0.12 * Math.sin((i + seed) / 5) + 0.06 * Math.cos((i + seed) / 8)
     rawFactors.push(weeklyFactor * waveFactor)
   }
-
   const avgFactor = rawFactors.reduce((sum, item) => sum + item, 0) / rawFactors.length
   return rawFactors.map((factor) => dayBase * (factor / avgFactor))
 })
 
 const completionBase = computed(() => actual.value / (target.value || 1))
 
-// 生成每日数据（模拟数据，增强起伏，避免达成率过直）
-const dailyData = computed(() => {
-  const days = daysInRange.value
+const generateDailyData = (days) => {
   const seed = titleSeed.value
   const rawRatios = []
   for (let i = 0; i < days; i++) {
@@ -191,16 +288,46 @@ const dailyData = computed(() => {
     const clipped = Math.max(0.56, Math.min(1.42, normalized))
     return Math.round(targetCurve.value[index] * clipped)
   })
-})
+}
+
+// 模块级每日数据（用于报单收入、线上营销收入）
+const moduleDailyData = computed(() => generateDailyData(moduleDaysInRange.value))
+
+// 全局筛选每日数据
+const dailyData = computed(() => generateDailyData(daysInRange.value))
 
 const dailyTargets = computed(() => {
   return targetCurve.value.map(item => Math.round(item))
 })
 
-const showRegionRank = computed(() => props.title === '报单收入')
-const showMarketingFunnel = computed(() => props.title === '线上营销收入')
-const showAuxChart = computed(() => showRegionRank.value || showMarketingFunnel.value)
+// ---------- 月度数据（利润模块） ----------
+const monthLabels = computed(() => getMonthLabels())
 
+const monthlyActuals = computed(() => {
+  const months = getMonthsInRange()
+  const seed = titleSeed.value
+  const monthlyBase = actual.value
+  const results = []
+  for (let i = 0; i < months; i++) {
+    const wave = 1 + 0.08 * Math.sin((i + seed) / 2.5) + 0.04 * Math.cos((i + seed) / 1.8)
+    results.push(Math.round(monthlyBase * wave))
+  }
+  return results
+})
+
+const monthlyTargets = computed(() => {
+  const months = getMonthsInRange()
+  const monthlyBase = target.value
+  return Array.from({ length: months }, () => Math.round(monthlyBase))
+})
+
+// ---------- 辅助图表控制 ----------
+const showRegionRank = computed(() => props.title === '报单收入')
+const showChannelPie = computed(() => props.title === '线上营销收入')
+const showExpenseBudget = computed(() => props.title === '利润')
+const showAuxChart = computed(() => showRegionRank.value || showChannelPie.value || showExpenseBudget.value)
+
+// 区域排名数据（降序）
 const regionCompletionData = computed(() => {
   const baseRate = completionBase.value * 100
   const regionalTargets = [
@@ -208,7 +335,7 @@ const regionCompletionData = computed(() => {
     { name: '华南', target: target.value * 0.34, offset: 2 },
     { name: '华东', target: target.value * 0.34, offset: 5 }
   ]
-  return regionalTargets.map((region, index) => {
+  const result = regionalTargets.map((region, index) => {
     const seedWave = Math.sin((titleSeed.value + index * 11) / 8) * 3.5
     const rate = Math.max(72, Math.min(128, baseRate + region.offset + seedWave))
     const actualValue = region.target * (rate / 100)
@@ -219,23 +346,33 @@ const regionCompletionData = computed(() => {
       rate
     }
   })
+  // 按达成率降序排列
+  return result.sort((a, b) => b.rate - a.rate)
 })
 
-const marketingFunnelData = computed(() => {
-  const deals = Math.max(520, Math.round(actual.value / 18000))
-  const opportunities = Math.round(deals / 0.28)
-  const qualifiedLeads = Math.round(opportunities / 0.36)
-  const leads = Math.round(qualifiedLeads / 0.32)
-  const traffic = Math.round(leads / 0.12)
+// 渠道贡献数据
+const channelContributionData = computed(() => {
+  const totalVal = actual.value
   return [
-    { name: '流量曝光', value: traffic },
-    { name: '线索收集', value: leads },
-    { name: '有效线索', value: qualifiedLeads },
-    { name: '意向商机', value: opportunities },
-    { name: '成交报单', value: deals }
+    { name: 'CPS小程序', value: Math.round(totalVal * 0.38) },
+    { name: '直播带货', value: Math.round(totalVal * 0.28) },
+    { name: '推客系统', value: Math.round(totalVal * 0.22) },
+    { name: '其他', value: Math.round(totalVal * 0.12) }
   ]
 })
 
+// 费用预算执行数据
+const expenseBudgetData = computed(() => {
+  return [
+    { name: '市场推广费', target: 3200000, actual: 2860000 },
+    { name: '会议费', target: 1500000, actual: 1620000 },
+    { name: '差旅费', target: 1200000, actual: 1080000 },
+    { name: '培训费', target: 800000, actual: 720000 },
+    { name: '办公费', target: 600000, actual: 540000 }
+  ]
+})
+
+// ---------- 格式化 ----------
 const formattedActual = computed(() => formatLargeNumber(actual.value))
 const formattedTarget = computed(() => formatLargeNumber(target.value))
 
@@ -274,3 +411,10 @@ const handleDrillDown = () => {
   })
 }
 </script>
+
+<style scoped>
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.8);
+  cursor: pointer;
+}
+</style>

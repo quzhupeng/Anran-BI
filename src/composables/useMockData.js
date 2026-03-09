@@ -5,7 +5,7 @@ export const bscIndicators = {
   finance: {
     name: '财务维度',
     indicators: [
-      { id: 'f1', name: '报单收入', weight: 25, target: 50000000, actual: 47500000, unit: '元' },
+      { id: 'f1', name: '报单收入', weight: 25, target: 65000000, actual: 58200000, unit: '元' },
       { id: 'f2', name: '利润', weight: 5, target: 13200000, actual: 12600000, unit: '元' },
       { id: 'f3', name: '线上营销收入', weight: 5, target: 8000000, actual: 8640000, unit: '元' }
     ]
@@ -53,18 +53,18 @@ export const financeCardsData = {
   baodan: {
     name: '报单收入',
     currentMonth: {
-      actual: 47500000,
-      target: 50000000,
+      actual: 58200000,
+      target: 65000000,
       mom: 8.5,
       yoy: 15.2,
-      trend: [42, 44, 46, 43, 45, 47.5]
+      trend: [52, 54, 56, 53, 55, 58.2]
     },
     accumulated: {
-      actual: 285000000,
-      target: 300000000,
+      actual: 152000000,
+      target: 180000000,
       mom: 6.2,
       yoy: 12.8,
-      trend: [180, 210, 235, 255, 270, 285]
+      trend: [85, 102, 118, 132, 143, 152]
     }
   },
   onlineMarketing: {

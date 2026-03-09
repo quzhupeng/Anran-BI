@@ -2,12 +2,12 @@
   <header class="sticky top-0 z-50 glass-effect border-b border-dashboard-border">
     <div class="px-6 py-3 flex items-center justify-between">
       <!-- 左侧：标志与标题 -->
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center">
+      <div class="flex items-center gap-4 min-w-[320px]">
+        <div class="w-11 h-11 rounded-lg bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center flex-shrink-0">
           <span class="text-white text-xl">📊</span>
         </div>
         <div>
-          <h1 class="text-lg font-semibold text-dashboard-text tracking-wide">直销业务经营驾驶舱</h1>
+          <h1 class="text-xl font-bold text-dashboard-text tracking-widest whitespace-nowrap">直销业务经营驾驶舱</h1>
           <p class="text-xs text-dashboard-muted">公司级经营管理中枢</p>
         </div>
       </div>
@@ -36,7 +36,6 @@
       <!-- 右侧：模式入口与用户 -->
       <div class="flex items-center gap-3">
         <div class="flex items-center gap-2 text-sm">
-          <span class="text-primary-400 font-medium">公司级经营驾驶舱</span>
           <button
             @click="$emit('toggle-mode')"
             class="px-3 py-1.5 rounded-lg border border-primary-500/40 bg-primary-500/15 text-primary-300 hover:bg-primary-500/25 transition-colors"
