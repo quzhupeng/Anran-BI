@@ -2,16 +2,16 @@
   <header class="sticky top-0 z-50 glass-effect border-b border-dashboard-border">
     <div class="px-6 py-3 flex items-center justify-between">
       <!-- 左侧：标志与标题 -->
-      <div class="flex items-center gap-4 min-w-[320px]">
-        <div class="w-11 h-11 rounded-lg bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center flex-shrink-0">
-          <span class="text-white text-xl">📊</span>
+      <div class="flex items-center gap-4 min-w-[420px]">
+        <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center flex-shrink-0">
+          <span class="text-white text-2xl">📊</span>
         </div>
         <div>
-          <h1 class="text-xl font-bold text-dashboard-text tracking-widest whitespace-nowrap">直销业务经营驾驶舱</h1>
-          <p class="text-xs text-dashboard-muted">公司级经营管理中枢</p>
+          <h1 class="text-2xl font-extrabold text-dashboard-text tracking-[0.2em] whitespace-nowrap">直销业务经营驾驶舱</h1>
+          <p class="text-xs text-dashboard-muted mt-0.5">公司级经营管理中枢</p>
         </div>
       </div>
-      
+
       <!-- 中间：功能悬浮操作区 -->
       <div class="flex items-center gap-2">
         <button class="floating-action-btn nav-emphasis bg-primary-600/20 border border-primary-500/40" @click="openChatAssistant">
@@ -32,20 +32,18 @@
           <span>一键派发任务</span>
         </button>
       </div>
-      
-      <!-- 右侧：模式入口与用户 -->
-      <div class="flex items-center gap-3">
-        <div class="flex items-center gap-2 text-sm">
-          <button
-            @click="$emit('toggle-mode')"
-            class="px-3 py-1.5 rounded-lg border border-primary-500/40 bg-primary-500/15 text-primary-300 hover:bg-primary-500/25 transition-colors"
-          >
-            经营分析会模式
-          </button>
-        </div>
+
+      <!-- 右侧：经营分析会 + 反馈 + 用户 + 时间 -->
+      <div class="flex items-center gap-3 flex-shrink-0">
+        <button
+          @click="$emit('toggle-mode')"
+          class="px-3 py-1.5 rounded-lg border border-primary-500/40 bg-primary-500/15 text-primary-300 hover:bg-primary-500/25 transition-colors text-sm"
+        >
+          经营分析会模式
+        </button>
 
         <button
-          class="text-xs text-dashboard-muted hover:text-dashboard-text transition-colors border-l border-dashboard-border pl-3"
+          class="text-xs text-dashboard-muted hover:text-dashboard-text transition-colors"
           @click="$emit('open-feedback')"
         >
           💬 意见反馈
@@ -62,7 +60,7 @@
           </div>
         </div>
 
-        <div class="text-xs text-dashboard-muted">
+        <div class="text-xs text-dashboard-muted whitespace-nowrap">
           {{ currentTime }}
         </div>
       </div>

@@ -62,17 +62,17 @@
 
     <!-- 图表区域 -->
     <div
-      :class="showAuxChart ? 'grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_360px] gap-4 items-stretch' : ''"
+      :class="showAuxChart ? 'grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_520px] gap-4 items-stretch' : ''"
     >
       <!-- 左侧主图表 -->
-      <div class="h-64">
+      <div class="h-80">
         <!-- 报单收入：仅实际值柱状图 -->
         <ComboBarChart
           v-if="chartMode === 'actual-only'"
           :data="moduleDailyData"
           :targets="[]"
           :labels="moduleDateLabels"
-          :height="204"
+          :height="320"
           :hideTargetAndRate="true"
         />
         <!-- 线上营销收入：每日面积图 -->
@@ -80,7 +80,7 @@
           v-else-if="chartMode === 'area'"
           :data="moduleDailyData"
           :labels="moduleDateLabels"
-          :height="204"
+          :height="320"
         />
         <!-- 利润：月度目标达成趋势图 -->
         <ComboBarChart
@@ -88,7 +88,7 @@
           :data="monthlyActuals"
           :targets="monthlyTargets"
           :labels="monthLabels"
-          :height="204"
+          :height="320"
         />
         <!-- 默认 -->
         <ComboBarChart
@@ -96,7 +96,7 @@
           :data="dailyData"
           :targets="dailyTargets"
           :labels="dateLabels"
-          :height="204"
+          :height="320"
           :isAccumulated="daysInRange > 31"
         />
       </div>
@@ -105,27 +105,27 @@
       <!-- 报单收入：区域达成排名 -->
       <div
         v-if="showRegionRank"
-        class="h-52 rounded-lg border border-dashboard-border bg-dashboard-dark/35 p-3"
+        class="h-80 rounded-lg border border-dashboard-border bg-dashboard-dark/35 p-5"
       >
-        <div class="text-[11px] text-dashboard-muted mb-1">区域达成排名</div>
+        <div class="text-sm font-medium text-dashboard-muted mb-3">区域达成排名</div>
         <RegionCompletionRank :data="regionCompletionData" />
       </div>
 
       <!-- 线上营销收入：渠道贡献分析 -->
       <div
         v-else-if="showChannelPie"
-        class="h-52 rounded-lg border border-dashboard-border bg-dashboard-dark/35 p-3"
+        class="h-80 rounded-lg border border-dashboard-border bg-dashboard-dark/35 p-5"
       >
-        <div class="text-[11px] text-dashboard-muted mb-1">渠道贡献分析</div>
+        <div class="text-sm font-medium text-dashboard-muted mb-3">渠道贡献分析</div>
         <ChannelPieChart :data="channelContributionData" />
       </div>
 
       <!-- 利润：费用预算执行 -->
       <div
         v-else-if="showExpenseBudget"
-        class="h-52 rounded-lg border border-dashboard-border bg-dashboard-dark/35 p-3"
+        class="h-80 rounded-lg border border-dashboard-border bg-dashboard-dark/35 p-5"
       >
-        <div class="text-[11px] text-dashboard-muted mb-1">主要费用项预算执行情况</div>
+        <div class="text-sm font-medium text-dashboard-muted mb-3">主要费用项预算执行情况</div>
         <ExpenseBudgetChart :data="expenseBudgetData" />
       </div>
     </div>

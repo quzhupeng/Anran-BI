@@ -8,7 +8,7 @@
             <div class="flex items-center gap-3">
               <span class="text-2xl">📊</span>
               <div>
-                <h3 class="text-xl font-bold text-dashboard-text">经营分析报告</h3>
+                <h3 class="text-xl font-bold text-dashboard-text">AI诊断与洞察</h3>
                 <p class="text-xs text-dashboard-muted mt-1">{{ reportConfig.timeRange }} | {{ reportConfig.businessScope }}</p>
               </div>
             </div>

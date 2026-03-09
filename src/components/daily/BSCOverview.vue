@@ -31,7 +31,7 @@
             :key="indicator.id"
             class="group relative flex items-center justify-between"
           >
-            <span class="text-base font-medium text-dashboard-muted truncate mr-2" style="max-width: 140px;">
+            <span class="text-base font-medium text-dashboard-muted mr-2 whitespace-nowrap">
               {{ indicator.name }}
             </span>
             <div class="flex items-center gap-2">
