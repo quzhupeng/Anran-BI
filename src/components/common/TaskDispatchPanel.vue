@@ -107,7 +107,7 @@
               <div>
                 <label class="text-xs text-dashboard-muted mb-1 block">同步状态</label>
                 <div class="h-[38px] rounded-lg border border-status-green/40 bg-status-green/10 flex items-center px-3 text-xs text-status-green">
-                  已与云栖任务系统打通，状态将自动同步
+                  已与云七任务系统打通，状态将自动同步
                 </div>
               </div>
             </div>

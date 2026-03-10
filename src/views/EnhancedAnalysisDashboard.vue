@@ -1778,33 +1778,87 @@ const aiGenerateWhys = (item) => {
 const strategyData = reactive({})
 const actionPlansData = reactive({})
 
-// 默认示例素材
-const defaultStrategy = '通过公司政策引导全体系借助4季度业务政策，推动市场业绩拉动，同时区域业务部要积极配合、引导、推动辖区各团队年底荣誉考核。'
+// 各指标的策略与行动计划模板
+const indicatorStrategyMap = {
+  f1: {
+    strategy: '通过公司政策引导全体系借助4季度业务政策，推动市场业绩拉动，同时区域业务部要积极配合、引导、推动辖区各团队年底荣誉考核。',
+    plans: [
+      { content: '积极宣推季度业务政策；每月组织召开城市发展委会议', owner: '营销中心-王总监', deadline: '2026-03-17' },
+      { content: '营销中心就业绩差距分解政策目标到每个城市经理进行目标跟踪', owner: '营销中心-王总监', deadline: '2026-03-21' },
+      { content: '城市经理要与辖区内骨干保持每周一次的高频次沟通，推动公司业务政策及体系荣誉考核', owner: '各城市经理', deadline: '2026-03-14' },
+      { content: '区域结合着公司的沙龙活动积极推动市场开展小型活动，提升市场进人能力', owner: '区域业务部', deadline: '2026-03-28' }
+    ]
+  },
+  c3: {
+    strategy: '聚焦新人首月留存与活动参与，通过标准化帮扶动作和导师带教机制，缩短新人成长周期，提升新人经营率至目标水平。',
+    plans: [
+      { content: '建立新人入职30天标准帮扶流程，明确每周关键动作节点（破冰、首单、转介绍）', owner: '培训中心-赵主管', deadline: '2026-03-14' },
+      { content: '各团队指定1对1导师，每周至少2次跟踪辅导记录，未达标的导师纳入约谈', owner: '各团队负责人', deadline: '2026-03-17' },
+      { content: '每周五组织新人专场沙龙活动，强化业务技能与企业文化融入', owner: '运营管理部-刘主管', deadline: '2026-03-21' },
+      { content: '营销中心按周汇总新人经营数据看板，对连续2周不达标团队进行重点帮扶', owner: '营销中心-王总监', deadline: '2026-03-28' }
+    ]
+  },
+  o1: {
+    strategy: '以新品上市推广为核心抓手，通过渠道铺货、终端陈列优化和重点区域爆破活动，快速拉升新产品销售占比。',
+    plans: [
+      { content: '制定新品专项推广方案，明确各区域铺货率目标和终端陈列标准', owner: '产品管理部-孙经理', deadline: '2026-03-14' },
+      { content: '针对重点区域开展新品体验活动和促销激励，推动终端动销', owner: '区域业务部', deadline: '2026-03-21' },
+      { content: '建立新品销售周报机制，按SKU追踪各渠道销售进度，及时调整策略', owner: '运营管理部-刘主管', deadline: '2026-03-17' }
+    ]
+  },
+  o2: {
+    strategy: '优化产成品库存结构，加速滞销品清理和畅销品补货节奏，降低库存周转天数至目标区间。',
+    plans: [
+      { content: '对库龄超过60天的SKU进行盘点分级，制定分层清理方案（促销、调拨、退供）', owner: '供应链-周经理', deadline: '2026-03-14' },
+      { content: '调整采购订单频次，由月度集中采购改为双周滚动补货，降低单次入库量', owner: '采购部-马主管', deadline: '2026-03-17' },
+      { content: '每周发布库存健康度报告，对周转天数超标品类启动预警和专项清理', owner: '供应链-周经理', deadline: '2026-03-21' }
+    ]
+  },
+  l1: {
+    strategy: '拓宽潜质人才识别渠道，优化人才盘点标准，加大高潜人员专项培养投入，提升潜质员工占比。',
+    plans: [
+      { content: '修订潜质员工评估标准，增加业绩增长趋势和学习力维度，扩大识别范围', owner: '人力资源-王部长', deadline: '2026-03-17' },
+      { content: '各部门提报高潜候选人名单，HR逐一面谈确认纳入潜质人才库', owner: '人力资源-王部长', deadline: '2026-03-21' },
+      { content: '启动潜质员工加速培养计划，每人制定90天IDP（个人发展计划）并配备导师', owner: '培训中心-赵主管', deadline: '2026-03-28' }
+    ]
+  },
+  l2: {
+    strategy: '聚焦关键管理岗位梯队建设，加快后备干部选拔、培养和实战历练，确保关键岗位人才储备率达标。',
+    plans: [
+      { content: '盘点现有关键管理岗位及后备人选缺口，制定分岗位补充计划', owner: '人力资源-王部长', deadline: '2026-03-14' },
+      { content: '对已入池后备干部安排轮岗或项目负责人实战锻炼机会，加速能力验证', owner: '人力资源-王部长', deadline: '2026-03-21' },
+      { content: '每月组织后备干部述职和评审会，不合格者退出、新增候选人递补', owner: '培训中心-赵主管', deadline: '2026-03-28' },
+      { content: '建立外部招聘快速通道，对短期无法内部培养的岗位启动社招', owner: '人力资源-王部长', deadline: '2026-03-17' }
+    ]
+  }
+}
 
-const defaultActionPlans = [
-  { content: '积极宣推季度业务政策；每月组织召开城市发展委会议', owner: '营销中心-王总监', deadline: '2026-03-17' },
-  { content: '营销中心就业绩差距分解政策目标到每个城市经理进行目标跟踪', owner: '营销中心-王总监', deadline: '2026-03-21' },
-  { content: '城市经理要与辖区内骨干保持每周一次的高频次沟通，推动公司业务政策及体系荣誉考核', owner: '各城市经理', deadline: '2026-03-14' },
-  { content: '区域结合着公司的沙龙活动积极推动市场开展小型活动，提升市场进人能力', owner: '区域业务部', deadline: '2026-03-28' }
-]
+// 通用兜底
+const fallbackStrategy = { strategy: '围绕指标差距，从人、货、场、流程四个维度制定针对性改善措施，明确责任人与时间节点，确保本月内缩小差距。', plans: [
+  { content: '分析差距的核心驱动因素，制定优先级排序', owner: '运营管理部', deadline: '2026-03-17' },
+  { content: '各责任部门提报具体改善方案并落实到人', owner: '各部门负责人', deadline: '2026-03-21' }
+]}
 
 const getStrategy = (indicatorId) => {
   if (!strategyData[indicatorId]) {
-    strategyData[indicatorId] = { content: defaultStrategy }
+    const tpl = indicatorStrategyMap[indicatorId] || fallbackStrategy
+    strategyData[indicatorId] = { content: tpl.strategy }
   }
   return strategyData[indicatorId]
 }
 
 const getActionPlans = (indicatorId) => {
   if (!actionPlansData[indicatorId]) {
-    actionPlansData[indicatorId] = defaultActionPlans.map(p => ({ ...p }))
+    const tpl = indicatorStrategyMap[indicatorId] || fallbackStrategy
+    actionPlansData[indicatorId] = tpl.plans.map(p => ({ ...p }))
   }
   return actionPlansData[indicatorId]
 }
 
 const addActionPlan = (indicatorId) => {
   if (!actionPlansData[indicatorId]) {
-    actionPlansData[indicatorId] = defaultActionPlans.map(p => ({ ...p }))
+    const tpl = indicatorStrategyMap[indicatorId] || fallbackStrategy
+    actionPlansData[indicatorId] = tpl.plans.map(p => ({ ...p }))
   }
   actionPlansData[indicatorId].push({ content: '', owner: '', deadline: '' })
 }
