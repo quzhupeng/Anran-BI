@@ -25,43 +25,21 @@
         </div>
 
         <!-- 表头：当月 / 累计 -->
-        <div class="flex items-center gap-1 mb-2 text-[11px] text-dashboard-muted pl-[85px]">
+        <div class="flex items-center gap-1 mb-2 text-[11px] text-dashboard-muted">
           <span class="flex-1 text-center">当月</span>
           <span class="flex-1 text-center">累计</span>
         </div>
 
         <!-- 指标列表 -->
-        <div class="space-y-2.5">
+        <div class="space-y-3">
           <div
             v-for="indicator in dimension.indicators"
             :key="indicator.id"
             class="group relative"
           >
-            <div class="flex items-center gap-1">
-              <span class="text-sm font-medium text-dashboard-muted whitespace-nowrap w-[80px] flex-shrink-0 truncate" :title="indicator.name">
-                {{ indicator.name }}
-              </span>
-              <!-- 当月数据 -->
-              <div class="flex-1 flex items-center justify-center gap-1 bg-dashboard-dark/40 rounded px-1.5 py-0.5">
-                <span class="font-semibold text-dashboard-text text-sm">
-                  {{ formatValue(indicator) }}
-                </span>
-                <StatusLight
-                  :status="getIndicatorStatus(indicator)"
-                  size="small"
-                />
-              </div>
-              <!-- 累计数据 -->
-              <div class="flex-1 flex items-center justify-center gap-1 bg-dashboard-dark/40 rounded px-1.5 py-0.5">
-                <span class="font-semibold text-dashboard-text text-sm">
-                  {{ formatAccValue(indicator) }}
-                </span>
-                <StatusLight
-                  :status="getAccIndicatorStatus(indicator)"
-                  size="small"
-                />
-              </div>
-              <!-- 异常指标：派发任务按钮 -->
+            <!-- 指标名称 + 派发按钮 -->
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-xs font-medium text-dashboard-muted">{{ indicator.name }}</span>
               <button
                 v-if="getIndicatorStatus(indicator) === 'red'"
                 @click.stop="handleDispatch(indicator)"
@@ -71,8 +49,29 @@
                 ✉️ 派发
               </button>
             </div>
+            <!-- 当月 + 累计数据 -->
+            <div class="flex items-center gap-1">
+              <div class="flex-1 flex items-center justify-center gap-1 bg-dashboard-dark/40 rounded px-1.5 py-0.5">
+                <span class="font-semibold text-dashboard-text text-sm">
+                  {{ formatValue(indicator) }}
+                </span>
+                <StatusLight
+                  :status="getIndicatorStatus(indicator)"
+                  size="small"
+                />
+              </div>
+              <div class="flex-1 flex items-center justify-center gap-1 bg-dashboard-dark/40 rounded px-1.5 py-0.5">
+                <span class="font-semibold text-dashboard-text text-sm">
+                  {{ formatAccValue(indicator) }}
+                </span>
+                <StatusLight
+                  :status="getAccIndicatorStatus(indicator)"
+                  size="small"
+                />
+              </div>
+            </div>
             <!-- 悬浮提示 -->
-            <div class="absolute left-0 -top-16 z-50 hidden group-hover:block bg-dashboard-dark border border-dashboard-border rounded-lg px-3 py-2 shadow-lg whitespace-nowrap text-xs">
+            <div class="absolute left-0 bottom-full mb-2 z-50 hidden group-hover:block bg-dashboard-dark border border-dashboard-border rounded-lg px-3 py-2 shadow-lg whitespace-nowrap text-xs">
               <div class="mb-1">
                 <span class="text-dashboard-muted">当月：</span>
                 <span class="text-primary-300 font-medium">{{ formatValue(indicator) }}</span>
@@ -117,22 +116,20 @@
           </div>
 
           <!-- 表头 -->
-          <div class="flex items-center gap-1 mb-2 text-[10px] text-dashboard-muted pl-[70px]">
+          <div class="flex items-center gap-1 mb-2 text-[10px] text-dashboard-muted">
             <span class="flex-1 text-center">当月</span>
             <span class="flex-1 text-center">累计</span>
           </div>
 
           <!-- 指标列表 -->
-          <div class="space-y-2">
+          <div class="space-y-2.5">
             <div
               v-for="indicator in dimension.indicators"
               :key="indicator.id"
               class="group relative"
             >
+              <div class="text-[11px] text-dashboard-muted mb-0.5">{{ indicator.name }}</div>
               <div class="flex items-center gap-1 text-xs">
-                <span class="text-dashboard-muted truncate w-[65px] flex-shrink-0" :title="indicator.name">
-                  {{ indicator.name }}
-                </span>
                 <div class="flex-1 flex items-center justify-center gap-0.5 bg-dashboard-dark/40 rounded px-1 py-0.5">
                   <span class="font-semibold text-dashboard-text text-xs">
                     {{ formatValue(indicator) }}
