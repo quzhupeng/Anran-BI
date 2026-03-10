@@ -16,6 +16,8 @@
             @drill-down="handleDrillDown"
             @open-report="$emit('open-report')"
             @open-alert-config="$emit('open-alert-config')"
+            @dispatch-task="handleDispatchFromIndicator"
+            @dispatch-alert="handleDispatchFromAlert"
           />
         </div>
       </div>
@@ -142,6 +144,30 @@ const handleCreateTask = (task) => {
     rootCause: '',
     action: '',
     chartSnapshot: '当前组合图（计划值/实际值/达成率）'
+  }
+  showTaskPanel.value = true
+}
+
+const handleDispatchFromIndicator = (taskData) => {
+  currentTaskData.value = {
+    ...taskData,
+    rootCause: '',
+    action: ''
+  }
+  showTaskPanel.value = true
+}
+
+const handleDispatchFromAlert = (alert) => {
+  currentTaskData.value = {
+    indicator: alert.title,
+    currentValue: '',
+    target: '',
+    gap: '',
+    department: '直销事业部',
+    owner: '',
+    rootCause: alert.detail,
+    action: '',
+    chartSnapshot: `预警：${alert.title}`
   }
   showTaskPanel.value = true
 }

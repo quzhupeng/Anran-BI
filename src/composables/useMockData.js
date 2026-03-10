@@ -1,36 +1,36 @@
 // Mock数据 - 基于PDF中的BSC指标体系
 
-// BSC核心指标数据
+// BSC核心指标数据（含当月和累计）
 export const bscIndicators = {
   finance: {
     name: '财务维度',
     indicators: [
-      { id: 'f1', name: '报单收入', weight: 25, target: 65000000, actual: 58200000, unit: '元' },
-      { id: 'f2', name: '利润', weight: 5, target: 13200000, actual: 12600000, unit: '元' },
-      { id: 'f3', name: '线上营销收入', weight: 5, target: 8000000, actual: 8640000, unit: '元' }
+      { id: 'f1', name: '报单收入', weight: 25, target: 65000000, actual: 58200000, unit: '元', accTarget: 180000000, accActual: 152000000 },
+      { id: 'f2', name: '利润', weight: 5, target: 13200000, actual: 12600000, unit: '元', accTarget: 78000000, accActual: 75200000 },
+      { id: 'f3', name: '线上营销收入', weight: 5, target: 8000000, actual: 8640000, unit: '元', accTarget: 48000000, accActual: 48600000 }
     ]
   },
   customer: {
     name: '客户维度',
     indicators: [
-      { id: 'c1', name: '报单人数', weight: 10, target: 150000, actual: 142500, unit: '人' },
-      { id: 'c2', name: '合高合格人次', weight: 5, target: 50000, actual: 47500, unit: '人次' },
-      { id: 'c3', name: '新人经营率', weight: 5, target: 85, actual: 72.3, unit: '%' }
+      { id: 'c1', name: '报单人数', weight: 10, target: 150000, actual: 142500, unit: '人', accTarget: 420000, accActual: 398000 },
+      { id: 'c2', name: '合高合格人次', weight: 5, target: 50000, actual: 47500, unit: '人次', accTarget: 140000, accActual: 128000 },
+      { id: 'c3', name: '新人经营率', weight: 5, target: 85, actual: 72.3, unit: '%', accTarget: 85, accActual: 74.6 }
     ]
   },
   operation: {
     name: '内部运营维度',
     indicators: [
-      { id: 'o1', name: '新上市产品销售总额', weight: 10, target: 12000000, actual: 10800000, unit: '元' },
-      { id: 'o2', name: '产成品库存周转天数', weight: 10, target: 45, actual: 52, unit: '天', inverse: true },
-      { id: 'o3', name: '流程遵从率', weight: 5, target: 95, actual: 91.2, unit: '%' }
+      { id: 'o1', name: '新上市产品销售总额', weight: 10, target: 12000000, actual: 10800000, unit: '元', accTarget: 36000000, accActual: 31200000 },
+      { id: 'o2', name: '产成品库存周转天数', weight: 10, target: 45, actual: 52, unit: '天', inverse: true, accTarget: 45, accActual: 49 },
+      { id: 'o3', name: '流程遵从率', weight: 5, target: 95, actual: 91.2, unit: '%', accTarget: 95, accActual: 92.8 }
     ]
   },
   learning: {
     name: '学习成长维度',
     indicators: [
-      { id: 'l1', name: '潜质员工占比', weight: 10, target: 15, actual: 12.8, unit: '%' },
-      { id: 'l2', name: '关键岗位人才（管理）储备率', weight: 10, target: 80, actual: 68, unit: '%' }
+      { id: 'l1', name: '潜质员工占比', weight: 10, target: 15, actual: 12.8, unit: '%', accTarget: 15, accActual: 13.2 },
+      { id: 'l2', name: '关键岗位人才（管理）储备率', weight: 10, target: 80, actual: 68, unit: '%', accTarget: 80, accActual: 71 }
     ]
   }
 }
@@ -185,6 +185,60 @@ export const actionTrackerData = [
     owner: '刘主管',
     status: '已完成',
     deadline: '2026-03-01'
+  }
+]
+
+// 上月PDCA追踪数据
+export const lastMonthPdcaData = [
+  {
+    id: 'pdca-1',
+    indicator: '报单收入',
+    action: '华东区重点客户二次回访覆盖率提升至90%',
+    owner: '张经理',
+    deadline: '2026-02-28',
+    status: '已完成',
+    result: '华东区回访覆盖率达92%，报单收入环比提升8.5%',
+    effectiveness: 'high'
+  },
+  {
+    id: 'pdca-2',
+    indicator: '新人经营率',
+    action: '启动新人导师制，每周1对1帮扶',
+    owner: '王部长',
+    deadline: '2026-02-25',
+    status: '部分完成',
+    result: '导师配对完成85%，新人经营率由70.1%提升至72.3%，仍低于目标',
+    effectiveness: 'medium'
+  },
+  {
+    id: 'pdca-3',
+    indicator: '产成品库存周转天数',
+    action: '启动滞销品促销清库专项',
+    owner: '李总监',
+    deadline: '2026-02-20',
+    status: '已完成',
+    result: '清理滞销库存380万元，周转天数由56天降至52天，目标45天',
+    effectiveness: 'medium'
+  },
+  {
+    id: 'pdca-4',
+    indicator: '线上营销收入',
+    action: '优化高转化人群投放包，重配预算',
+    owner: '刘主管',
+    deadline: '2026-02-28',
+    status: '已完成',
+    result: '线上营销收入超额完成108%，投放ROI提升23%',
+    effectiveness: 'high'
+  },
+  {
+    id: 'pdca-5',
+    indicator: '关键岗位人才储备率',
+    action: '完成年度人才盘点与晋升路径设计',
+    owner: '王部长',
+    deadline: '2026-02-28',
+    status: '未完成',
+    result: '人才盘点完成60%，晋升路径设计延期至3月中旬',
+    effectiveness: 'low'
   }
 ]
 

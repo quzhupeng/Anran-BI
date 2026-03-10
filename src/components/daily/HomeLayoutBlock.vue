@@ -1,5 +1,8 @@
 <template>
-  <BSCOverview v-if="componentId === 'metric-overview'" />
+  <BSCOverview
+    v-if="componentId === 'metric-overview'"
+    @dispatch-task="$emit('dispatch-task', $event)"
+  />
 
   <CoreFinanceCards
     v-else-if="componentId === 'metric-finance'"
@@ -12,6 +15,7 @@
     v-else-if="componentId === 'chart-alert'"
     @open-report="$emit('open-report')"
     @open-alert-config="$emit('open-alert-config')"
+    @dispatch-alert="$emit('dispatch-alert', $event)"
   />
 
   <ProcessRadar v-else-if="componentId === 'chart-radar'" />
@@ -125,7 +129,7 @@ const props = defineProps({
   }
 })
 
-defineEmits(['open-report', 'open-alert-config', 'drill-down'])
+defineEmits(['open-report', 'open-alert-config', 'drill-down', 'dispatch-task', 'dispatch-alert'])
 
 const componentId = computed(() => props.item?.componentId)
 

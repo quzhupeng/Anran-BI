@@ -58,7 +58,7 @@
               @click="generateMeetingMinutes"
               class="px-3 py-1.5 rounded-lg border border-dashboard-border text-sm text-dashboard-muted hover:text-dashboard-text transition-colors"
             >
-              📝 生成纪要
+              📝 报告概览
             </button>
 
             <!-- 导出报告 -->
@@ -133,325 +133,359 @@
 
     <!-- 主内容区 -->
     <main class="flex-1 overflow-hidden flex">
-      <!-- 指标卡片库（侧边栏） -->
+      <!-- 指标卡片库（侧边栏） - 固定不动 -->
       <aside
         v-if="!presentationMode"
-        class="w-72 flex-shrink-0 border-r border-dashboard-border overflow-auto"
+        class="w-72 flex-shrink-0 border-r border-dashboard-border overflow-auto sticky top-0 h-[calc(100vh-120px)]"
         :class="showInsightPanel ? 'bg-dashboard-card/50' : 'bg-dashboard-card'"
       >
-        <div class="p-4 border-b border-dashboard-border sticky top-0 bg-dashboard-card/95">
-          <h3 class="text-sm font-semibold text-dashboard-text">指标卡片库</h3>
-          <p class="text-xs text-dashboard-muted mt-0.5">拖拽添加到报告画布</p>
+        <!-- 固定标题 -->
+        <div class="p-4 border-b border-dashboard-border sticky top-0 z-10 bg-dashboard-card/95 backdrop-blur-sm">
+          <h3 class="text-sm font-semibold text-dashboard-text">指标导航</h3>
+          <p class="text-xs text-dashboard-muted mt-0.5">点击快速跳转到对应分析</p>
         </div>
 
-        <div class="p-3 space-y-2">
-          <div
-            v-for="template in metricTemplates"
-            :key="template.id"
-            draggable="true"
-            @dragstart="onDragStartLibrary(template.id)"
-            class="bg-dashboard-dark/40 border border-dashboard-border rounded-lg p-3 cursor-grab hover:border-primary-500/40 transition-colors"
+        <!-- 指标快速跳转 -->
+        <div class="p-3 space-y-1 border-b border-dashboard-border">
+          <div class="text-[10px] text-dashboard-muted uppercase tracking-wider mb-2">分析流程</div>
+          <button
+            @click="scrollToSection('pdca-tracking')"
+            class="w-full text-left text-xs px-2 py-1.5 rounded hover:bg-primary-500/10 text-primary-400 hover:text-primary-300 transition-colors"
           >
-            <div class="flex items-center justify-between gap-2">
-              <div>
-                <div class="text-sm font-medium text-dashboard-text">{{ template.title }}</div>
-                <div class="text-xs text-dashboard-muted mt-0.5">{{ template.description }}</div>
+            🔄 PDCA追踪
+          </button>
+          <button
+            @click="scrollToSection('scorecard')"
+            class="w-full text-left text-xs px-2 py-1.5 rounded hover:bg-primary-500/10 text-dashboard-muted hover:text-dashboard-text transition-colors"
+          >
+            📋 经营成绩单
+          </button>
+        </div>
+
+        <div v-if="abnormalIndicators.length > 0" class="p-3 space-y-1 border-b border-dashboard-border">
+          <div class="text-[10px] text-dashboard-muted uppercase tracking-wider mb-2">异常指标分析</div>
+          <button
+            v-for="item in abnormalIndicators"
+            :key="item.id"
+            @click="scrollToIndicator(item.id)"
+            class="w-full text-left flex items-center gap-2 text-xs px-2 py-1.5 rounded hover:bg-primary-500/10 transition-colors"
+            :class="item.status === 'red' ? 'text-status-red' : 'text-status-yellow'"
+          >
+            <span
+              class="w-2 h-2 rounded-full flex-shrink-0"
+              :class="item.status === 'red' ? 'bg-status-red' : 'bg-status-yellow'"
+            ></span>
+            <span class="truncate">{{ item.name }}</span>
+            <span class="ml-auto text-[10px]">{{ item.rate }}%</span>
+          </button>
+        </div>
+
+        <!-- 指标卡片库：分类展示 -->
+        <div class="p-3 space-y-3">
+          <div class="text-[10px] text-dashboard-muted uppercase tracking-wider">添加更多指标</div>
+          <div v-for="(templates, catKey) in groupedMetricTemplates" :key="catKey" class="space-y-1.5">
+            <div class="text-[11px] font-medium text-dashboard-text px-1">{{ metricCategoryNames[catKey] || catKey }}</div>
+            <div
+              v-for="template in templates"
+              :key="template.id"
+              draggable="true"
+              @dragstart="onDragStartLibrary(template.id)"
+              class="bg-dashboard-dark/40 border border-dashboard-border rounded-lg p-2.5 cursor-grab hover:border-primary-500/40 transition-colors"
+            >
+              <div class="flex items-center justify-between gap-2">
+                <div class="min-w-0">
+                  <div class="text-xs font-medium text-dashboard-text truncate">{{ template.title }}</div>
+                  <div class="text-[10px] text-dashboard-muted mt-0.5 truncate">{{ template.description }}</div>
+                </div>
+                <button
+                  @click="addMetricCard(template.id)"
+                  class="text-[10px] px-1.5 py-0.5 rounded bg-primary-500/20 text-primary-400 hover:bg-primary-500/30 transition-colors whitespace-nowrap flex-shrink-0"
+                >
+                  + 添加
+                </button>
               </div>
-              <button
-                @click="addMetricCard(template.id)"
-                class="text-xs px-2 py-1 rounded bg-primary-500/20 text-primary-400 hover:bg-primary-500/30 transition-colors whitespace-nowrap"
-              >
-                + 添加
-              </button>
             </div>
           </div>
         </div>
       </aside>
 
       <!-- 报告画布 -->
-      <section class="flex-1 overflow-auto p-4 lg:p-6 space-y-4">
-        <!-- 指标区 -->
-        <div class="rounded-lg border border-dashboard-border/60 bg-dashboard-dark/30 p-4">
+      <section class="flex-1 overflow-auto p-4 lg:p-6 space-y-6">
+
+        <!-- ==================== PDCA：上月任务追踪 ==================== -->
+        <div data-section="pdca-tracking" class="rounded-lg border border-primary-500/20 bg-dashboard-dark/30 p-5">
           <div class="flex items-center justify-between mb-4">
-            <h4 class="text-sm font-medium text-dashboard-text">📊 指标区</h4>
-            <span class="text-xs text-dashboard-muted">{{ metricCards.length }} 张卡片</span>
+            <div class="flex items-center gap-2">
+              <span class="text-lg">🔄</span>
+              <h4 class="text-base font-semibold text-dashboard-text">PDCA追踪 · 上月任务完成情况</h4>
+            </div>
+            <div class="flex items-center gap-3 text-xs">
+              <span class="px-2 py-0.5 rounded-full bg-status-green/20 text-status-green">
+                已完成 {{ pdcaStats.completed }}
+              </span>
+              <span class="px-2 py-0.5 rounded-full bg-status-yellow/20 text-status-yellow">
+                部分完成 {{ pdcaStats.partial }}
+              </span>
+              <span class="px-2 py-0.5 rounded-full bg-status-red/20 text-status-red">
+                未完成 {{ pdcaStats.uncompleted }}
+              </span>
+            </div>
           </div>
 
-          <div
-            class="min-h-[200px]"
-            @dragover.prevent
-            @drop="onMetricDropAt(metricCards.length)"
-          >
-            <div
-              v-if="!metricCards.length"
-              class="h-40 flex items-center justify-center text-dashboard-muted text-sm border border-dashed border-dashboard-border rounded-lg"
-            >
-              从左侧拖拽指标卡片到此处，开始组装分析报告
-            </div>
-
-            <div v-else class="grid grid-cols-1 xl:grid-cols-2 gap-4">
-              <template v-for="(card, index) in metricCards" :key="card.uid">
-                <!-- 指标卡片 -->
-                <article
-                  draggable="true"
-                  @dragstart="onDragStartMetric(index)"
-                  @dragover.prevent
-                  @drop="onMetricDropAt(index)"
-                  class="bg-dashboard-dark/50 border border-dashboard-border rounded-lg p-4 cursor-move hover:border-primary-500/30 transition-colors"
-                  :class="card.span === 2 ? 'xl:col-span-2' : ''"
+          <div class="overflow-x-auto">
+            <table class="w-full text-xs">
+              <thead>
+                <tr class="border-b border-dashboard-border">
+                  <th class="text-left py-2 px-2 text-dashboard-muted font-medium">指标</th>
+                  <th class="text-left py-2 px-2 text-dashboard-muted font-medium">上月整改动作</th>
+                  <th class="text-left py-2 px-2 text-dashboard-muted font-medium">责任人</th>
+                  <th class="text-left py-2 px-2 text-dashboard-muted font-medium">完成状态</th>
+                  <th class="text-left py-2 px-2 text-dashboard-muted font-medium">执行结果</th>
+                  <th class="text-center py-2 px-2 text-dashboard-muted font-medium">成效</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  v-for="item in lastMonthPdcaData"
+                  :key="item.id"
+                  class="border-b border-dashboard-border/40 hover:bg-dashboard-dark/30"
                 >
-                  <div class="flex items-start justify-between gap-2 mb-3">
-                    <div>
-                      <h5 class="text-sm font-semibold text-dashboard-text">{{ card.title }}</h5>
-                      <p class="text-xs text-dashboard-muted mt-0.5">{{ card.description }}</p>
-                    </div>
-                    <div class="flex items-center gap-1">
-                      <button
-                        @click="toggleMetricSpan(index)"
-                        class="text-xs px-2 py-1 rounded bg-dashboard-dark border border-dashboard-border text-dashboard-muted hover:text-dashboard-text transition-colors"
-                      >
-                        {{ card.span === 2 ? '半宽' : '通栏' }}
-                      </button>
-                      <button
-                        @click="removeMetricCard(index)"
-                        class="text-xs px-2 py-1 rounded bg-status-red/20 text-status-red hover:bg-status-red/30 transition-colors"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  </div>
-
-                  <!-- 指标数据展示 -->
-                  <div class="space-y-3">
-                    <!-- 主要指标行 -->
-                    <div class="flex items-center justify-between">
-                      <div>
-                        <div class="text-2xl font-bold text-dashboard-text">
-                          {{ formatLarge(getMetricView(index).actual) }}
-                        </div>
-                        <div class="text-xs text-dashboard-muted mt-0.5">
-                          目标 {{ formatLarge(getMetricView(index).target) }} · 达成率 {{ getMetricView(index).rate.toFixed(1) }}%
-                        </div>
-                      </div>
-                      <div
-                        class="text-right"
-                        :class="getMetricView(index).gapValue >= 0 ? 'text-status-green' : 'text-status-red'"
-                      >
-                        <div class="text-lg font-semibold">
-                          {{ getMetricView(index).gapValue >= 0 ? '+' : '' }}{{ formatLarge(getMetricView(index).gapValue) }}
-                        </div>
-                        <div class="text-xs text-dashboard-muted">差距</div>
-                      </div>
-                    </div>
-
-                    <!-- 周期对比（如果启用） -->
-                    <div v-if="analysisContext.comparePeriods.length" class="flex items-center gap-4 text-xs">
-                      <template v-if="analysisContext.comparePeriods.includes('mom')">
-                        <span class="text-dashboard-muted">环比：</span>
-                        <span :class="getMetricView(index).mom >= 0 ? 'text-status-green' : 'text-status-red'">
-                          {{ getMetricView(index).mom >= 0 ? '+' : '' }}{{ getMetricView(index).mom.toFixed(1) }}%
-                        </span>
-                      </template>
-                      <template v-if="analysisContext.comparePeriods.includes('yoy')">
-                        <span class="text-dashboard-muted">同比：</span>
-                        <span :class="getMetricView(index).yoy >= 0 ? 'text-status-green' : 'text-status-red'">
-                          {{ getMetricView(index).yoy >= 0 ? '+' : '' }}{{ getMetricView(index).yoy.toFixed(1) }}%
-                        </span>
-                      </template>
-                    </div>
-
-                    <!-- 迷你图表 -->
-                    <div class="h-16 flex items-end gap-1">
-                      <span
-                        v-for="(bar, idx) in getMetricView(index).bars"
-                        :key="idx"
-                        class="flex-1 rounded-sm transition-all"
-                        :style="{
-                          height: `${bar}%`,
-                          background: `linear-gradient(to top, ${getBarColor(getMetricView(index).rate)})`
-                        }"
-                      ></span>
-                    </div>
-                  </div>
-                </article>
-              </template>
-            </div>
+                  <td class="py-2 px-2 text-dashboard-text font-medium">{{ item.indicator }}</td>
+                  <td class="py-2 px-2 text-dashboard-muted max-w-[200px]">{{ item.action }}</td>
+                  <td class="py-2 px-2 text-primary-300">{{ item.owner }}</td>
+                  <td class="py-2 px-2">
+                    <span
+                      class="px-2 py-0.5 rounded-full text-[11px]"
+                      :class="{
+                        'bg-status-green/20 text-status-green': item.status === '已完成',
+                        'bg-status-yellow/20 text-status-yellow': item.status === '部分完成',
+                        'bg-status-red/20 text-status-red': item.status === '未完成'
+                      }"
+                    >
+                      {{ item.status }}
+                    </span>
+                  </td>
+                  <td class="py-2 px-2 text-dashboard-muted max-w-[260px]">{{ item.result }}</td>
+                  <td class="py-2 px-2 text-center">
+                    <span
+                      class="inline-block w-2.5 h-2.5 rounded-full"
+                      :class="{
+                        'bg-status-green': item.effectiveness === 'high',
+                        'bg-status-yellow': item.effectiveness === 'medium',
+                        'bg-status-red': item.effectiveness === 'low'
+                      }"
+                      :title="{ high: '成效显著', medium: '有一定效果', low: '效果不佳' }[item.effectiveness]"
+                    ></span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
 
-        <!-- 闭环分析区 - 垂直滚动布局 -->
-        <div class="space-y-4">
-          <!-- 1️⃣ 差距分析模块 -->
-          <div class="rounded-lg border border-dashboard-border/60 bg-dashboard-dark/30 p-4">
-            <div class="flex items-center gap-2 mb-4">
-              <span class="w-6 h-6 rounded-full bg-primary-500/20 text-primary-400 flex items-center justify-center text-sm font-bold">1</span>
-              <h4 class="text-sm font-medium text-dashboard-text">📉 差距分析</h4>
-              <span class="text-xs text-dashboard-muted ml-auto">目标 vs 实际 差距排名</span>
+        <!-- ==================== 总览：经营成绩单 ==================== -->
+        <div data-section="scorecard" class="rounded-lg border border-dashboard-border/60 bg-dashboard-dark/30 p-5">
+          <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-2">
+              <span class="text-lg">📋</span>
+              <h4 class="text-base font-semibold text-dashboard-text">经营成绩单</h4>
+            </div>
+            <span class="text-xs text-dashboard-muted">{{ dateRangeLabel }} · {{ currentBusinessLineLabel }}</span>
+          </div>
+
+          <!-- 成绩单表格 -->
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="border-b border-dashboard-border">
+                  <th class="text-left py-2 px-3 text-dashboard-muted font-medium">BSC维度</th>
+                  <th class="text-left py-2 px-3 text-dashboard-muted font-medium">指标名称</th>
+                  <th class="text-right py-2 px-3 text-dashboard-muted font-medium">当月目标</th>
+                  <th class="text-right py-2 px-3 text-dashboard-muted font-medium">当月实际</th>
+                  <th class="text-right py-2 px-3 text-dashboard-muted font-medium">当月达成率</th>
+                  <th class="text-right py-2 px-3 text-dashboard-muted font-medium">累计目标</th>
+                  <th class="text-right py-2 px-3 text-dashboard-muted font-medium">累计实际</th>
+                  <th class="text-right py-2 px-3 text-dashboard-muted font-medium">累计达成率</th>
+                  <th class="text-center py-2 px-3 text-dashboard-muted font-medium">状态</th>
+                </tr>
+              </thead>
+              <tbody>
+                <template v-for="(dimension, dimKey) in scorecardData" :key="dimKey">
+                  <tr
+                    v-for="(row, rIdx) in dimension.rows"
+                    :key="row.id"
+                    class="border-b border-dashboard-border/40 hover:bg-dashboard-dark/30"
+                    :class="row.isAbnormal ? 'bg-status-red/5' : ''"
+                  >
+                    <td v-if="rIdx === 0" :rowspan="dimension.rows.length" class="py-2 px-3 text-dashboard-text font-medium align-top border-r border-dashboard-border/30">
+                      {{ dimension.icon }} {{ dimension.name }}
+                    </td>
+                    <td class="py-2 px-3 text-dashboard-text">{{ row.name }}</td>
+                    <td class="py-2 px-3 text-right text-dashboard-muted">{{ row.targetStr }}</td>
+                    <td class="py-2 px-3 text-right text-dashboard-text font-medium">{{ row.actualStr }}</td>
+                    <td class="py-2 px-3 text-right font-semibold" :class="row.rateClass">{{ row.rate }}%</td>
+                    <td class="py-2 px-3 text-right text-dashboard-muted">{{ row.accTargetStr }}</td>
+                    <td class="py-2 px-3 text-right text-dashboard-text font-medium">{{ row.accActualStr }}</td>
+                    <td class="py-2 px-3 text-right font-semibold" :class="row.accRateClass">{{ row.accRate }}%</td>
+                    <td class="py-2 px-3 text-center">
+                      <span
+                        class="inline-block w-2.5 h-2.5 rounded-full"
+                        :class="{
+                          'bg-status-green': row.status === 'green',
+                          'bg-status-yellow': row.status === 'yellow',
+                          'bg-status-red status-pulse': row.status === 'red'
+                        }"
+                      ></span>
+                    </td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ==================== 分述：异常指标逐一分析 ==================== -->
+        <div v-if="abnormalIndicators.length > 0" class="space-y-6">
+          <div class="flex items-center gap-2">
+            <span class="text-lg">🔍</span>
+            <h4 class="text-base font-semibold text-dashboard-text">异常指标分析</h4>
+            <span class="text-xs text-dashboard-muted">（共 {{ abnormalIndicators.length }} 项未达标指标）</span>
+          </div>
+
+          <div
+            v-for="item in abnormalIndicators"
+            :key="item.id"
+            :id="'indicator-' + item.id"
+            class="rounded-lg border border-status-red/20 bg-dashboard-dark/30 overflow-hidden"
+          >
+            <!-- 指标标题 -->
+            <div class="px-5 py-3 bg-status-red/5 border-b border-status-red/20 flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <span class="w-2.5 h-2.5 rounded-full bg-status-red status-pulse"></span>
+                <h5 class="text-sm font-semibold text-dashboard-text">{{ item.name }}</h5>
+                <span class="text-xs px-2 py-0.5 rounded-full bg-status-red/20 text-status-red">
+                  达成率 {{ item.rate }}%
+                </span>
+              </div>
+              <span class="text-xs text-dashboard-muted">{{ item.dimensionName }}</span>
             </div>
 
-            <div class="space-y-3">
-              <div
-                v-for="gap in closureData.gaps"
-                :key="gap.cardId"
-                class="rounded-lg border border-dashboard-border bg-dashboard-dark/40 p-4"
-              >
-                <div class="flex items-center justify-between">
-                  <div>
-                    <div class="text-sm font-medium text-dashboard-text">{{ gap.indicator }}</div>
-                    <div class="text-xs text-dashboard-muted mt-1">
-                      计划 {{ formatLarge(gap.target) }} / 实际 {{ formatLarge(gap.actual) }}
-                    </div>
+            <div class="p-5 space-y-4">
+              <!-- 1. 数据概况（当月+累计） -->
+              <div class="grid grid-cols-2 gap-4">
+                <div class="bg-dashboard-dark/50 rounded-lg p-3 border border-dashboard-border">
+                  <div class="text-xs text-dashboard-muted mb-1">当月数据</div>
+                  <div class="flex items-baseline gap-2">
+                    <span class="text-xl font-bold text-dashboard-text">{{ item.actualStr }}</span>
+                    <span class="text-xs text-dashboard-muted">/ 目标 {{ item.targetStr }}</span>
                   </div>
-                  <div class="text-right">
-                    <div
-                      class="text-xl font-bold"
-                      :class="gap.gapValue >= 0 ? 'text-status-green' : 'text-status-red'"
-                    >
-                      {{ gap.gapValue >= 0 ? '+' : '' }}{{ formatLarge(gap.gapValue) }}
-                    </div>
-                    <div
-                      class="text-xs"
-                      :class="gap.gapRate >= 0 ? 'text-status-green' : 'text-status-red'"
-                    >
-                      {{ gap.gapRate >= 0 ? '+' : '' }}{{ gap.gapRate.toFixed(1) }}%
-                    </div>
+                  <div class="text-xs mt-1" :class="item.rateClass">达成率 {{ item.rate }}%，差距 {{ item.gapStr }}</div>
+                </div>
+                <div class="bg-dashboard-dark/50 rounded-lg p-3 border border-dashboard-border">
+                  <div class="text-xs text-dashboard-muted mb-1">累计数据</div>
+                  <div class="flex items-baseline gap-2">
+                    <span class="text-xl font-bold text-dashboard-text">{{ item.accActualStr }}</span>
+                    <span class="text-xs text-dashboard-muted">/ 目标 {{ item.accTargetStr }}</span>
+                  </div>
+                  <div class="text-xs mt-1" :class="item.accRateClass">达成率 {{ item.accRate }}%</div>
+                </div>
+              </div>
+
+              <!-- 2. 差距分析 -->
+              <div class="bg-dashboard-dark/40 rounded-lg p-4 border border-dashboard-border">
+                <div class="flex items-center gap-2 mb-3">
+                  <span class="w-5 h-5 rounded-full bg-status-red/20 text-status-red flex items-center justify-center text-xs font-bold">1</span>
+                  <span class="text-sm font-medium text-dashboard-text">差距分析</span>
+                </div>
+                <div class="grid grid-cols-3 gap-3 text-center">
+                  <div>
+                    <div class="text-xs text-dashboard-muted">目标值</div>
+                    <div class="text-lg font-semibold text-dashboard-text mt-1">{{ item.targetStr }}</div>
+                  </div>
+                  <div>
+                    <div class="text-xs text-dashboard-muted">实际值</div>
+                    <div class="text-lg font-semibold text-dashboard-text mt-1">{{ item.actualStr }}</div>
+                  </div>
+                  <div>
+                    <div class="text-xs text-dashboard-muted">差距</div>
+                    <div class="text-lg font-semibold text-status-red mt-1">{{ item.gapStr }}</div>
                   </div>
                 </div>
                 <div class="mt-3 h-2 rounded bg-dashboard-border overflow-hidden">
                   <div
-                    class="h-full transition-all"
-                    :class="gap.gapRate >= 0 ? 'bg-status-green' : 'bg-status-red'"
-                    :style="{ width: `${Math.min(100, Math.max(0, 50 + gap.gapRate / 2))}%` }"
+                    class="h-full bg-status-red transition-all"
+                    :style="{ width: Math.min(100, parseFloat(item.rate)) + '%' }"
                   ></div>
                 </div>
               </div>
-              <div v-if="!closureData.gaps.length" class="text-sm text-dashboard-muted py-8 text-center border border-dashed border-dashboard-border rounded-lg">
-                暂无可分析指标，请先在指标区添加卡片
-              </div>
-            </div>
-          </div>
 
-          <!-- 2️⃣ 根因分析模块 -->
-          <div class="rounded-lg border border-dashboard-border/60 bg-dashboard-dark/30 p-4">
-            <div class="flex items-center gap-2 mb-4">
-              <span class="w-6 h-6 rounded-full bg-status-yellow/20 text-status-yellow flex items-center justify-center text-sm font-bold">2</span>
-              <h4 class="text-sm font-medium text-dashboard-text">🔍 根因分析</h4>
-              <span class="text-xs text-dashboard-muted ml-auto">未达成指标的根因拆解</span>
-            </div>
-
-            <div class="space-y-4">
-              <div
-                v-for="causeGroup in closureData.causes"
-                :key="causeGroup.id"
-                class="rounded-lg border border-dashboard-border bg-dashboard-dark/40 p-4"
-              >
+              <!-- 3. 根因分析 (AI生成 + 可编辑) -->
+              <div class="bg-dashboard-dark/40 rounded-lg p-4 border border-dashboard-border">
                 <div class="flex items-center justify-between mb-3">
-                  <div class="text-sm font-medium text-dashboard-text">{{ causeGroup.indicator }}</div>
-                  <span class="text-status-red text-sm font-semibold">
-                    未达成 {{ Math.abs(causeGroup.gapRate).toFixed(1) }}%
-                  </span>
+                  <div class="flex items-center gap-2">
+                    <span class="w-5 h-5 rounded-full bg-status-yellow/20 text-status-yellow flex items-center justify-center text-xs font-bold">2</span>
+                    <span class="text-sm font-medium text-dashboard-text">根因分析</span>
+                  </div>
+                  <span class="text-[10px] px-2 py-0.5 rounded bg-primary-500/20 text-primary-300">🤖 AI辅助生成 · 可编辑</span>
                 </div>
-
                 <div class="space-y-2">
                   <div
-                    v-for="reason in causeGroup.reasons"
-                    :key="reason.id"
+                    v-for="(cause, cIdx) in item.causes"
+                    :key="cIdx"
                     class="rounded border border-dashboard-border/60 bg-dashboard-dark/50 p-3"
                   >
                     <div class="flex items-center justify-between text-xs mb-2">
-                      <span class="text-dashboard-text font-medium">
-                        {{ reason.dimension }} · {{ reason.factor }}
-                      </span>
-                      <span class="text-status-yellow font-semibold">贡献度 {{ reason.contribution }}%</span>
+                      <span class="text-dashboard-text font-medium">{{ cause.dimension }} · {{ cause.factor }}</span>
+                      <span class="text-status-yellow font-semibold">贡献度 {{ cause.contribution }}%</span>
                     </div>
                     <div class="h-1.5 rounded bg-dashboard-border overflow-hidden mb-2">
-                      <div
-                        class="h-full bg-status-yellow"
-                        :style="{ width: `${reason.contribution}%` }"
-                      ></div>
+                      <div class="h-full bg-status-yellow" :style="{ width: `${cause.contribution}%` }"></div>
                     </div>
-                    <div class="text-[11px] text-dashboard-muted">{{ reason.note }}</div>
-                    <div class="text-[11px] text-primary-300 mt-1">💡 {{ reason.action }}</div>
+                    <div class="text-[11px] text-dashboard-muted">{{ cause.note }}</div>
                   </div>
                 </div>
+              </div>
 
-                <div class="mt-3 pt-3 border-t border-dashboard-border/50 text-xs text-primary-300">
-                  📌 结论：{{ causeGroup.conclusion }}
+              <!-- 4. 改进对策与任务派发 -->
+              <div class="bg-dashboard-dark/40 rounded-lg p-4 border border-dashboard-border">
+                <div class="flex items-center justify-between mb-3">
+                  <div class="flex items-center gap-2">
+                    <span class="w-5 h-5 rounded-full bg-primary-500/20 text-primary-400 flex items-center justify-center text-xs font-bold">3</span>
+                    <span class="text-sm font-medium text-dashboard-text">改进对策与任务</span>
+                  </div>
+                  <span class="text-[10px] text-dashboard-muted">可编辑内容后派发</span>
                 </div>
-              </div>
-              <div v-if="!closureData.causes.length" class="text-sm text-dashboard-muted py-8 text-center border border-dashed border-dashboard-border rounded-lg">
-                <span class="text-status-green mr-1">✓</span> 当前指标均已达成目标，无需根因分析
-              </div>
-            </div>
-          </div>
-
-          <!-- 3️⃣ 任务督导模块 -->
-          <div data-section="task-supervision" class="rounded-lg border border-dashboard-border/60 bg-dashboard-dark/30 p-4">
-            <div class="flex items-center gap-2 mb-4">
-              <span class="w-6 h-6 rounded-full bg-primary-500/20 text-primary-400 flex items-center justify-center text-sm font-bold">3</span>
-              <h4 class="text-sm font-medium text-dashboard-text">📋 任务督导</h4>
-              <span class="text-xs text-dashboard-muted ml-auto">整改任务跟踪与派发</span>
-            </div>
-
-            <!-- 任务统计卡片 -->
-            <div class="grid grid-cols-3 gap-3 mb-4">
-              <div
-                v-for="stat in taskStats"
-                :key="stat.status"
-                class="rounded-lg border border-dashboard-border bg-dashboard-dark/40 p-3 text-center"
-              >
-                <div class="text-2xl font-bold" :class="stat.class">{{ stat.count }}</div>
-                <div class="text-xs text-dashboard-muted mt-1">{{ stat.label }}</div>
-              </div>
-            </div>
-
-            <!-- 任务列表 -->
-            <div class="overflow-x-auto">
-              <table class="w-full text-xs">
-                <thead>
-                  <tr class="border-b border-dashboard-border">
-                    <th class="text-left py-2 text-dashboard-muted font-medium">指标</th>
-                    <th class="text-left py-2 text-dashboard-muted font-medium">根因</th>
-                    <th class="text-left py-2 text-dashboard-muted font-medium">整改动作</th>
-                    <th class="text-left py-2 text-dashboard-muted font-medium">责任人</th>
-                    <th class="text-left py-2 text-dashboard-muted font-medium">截止</th>
-                    <th class="text-left py-2 text-dashboard-muted font-medium">状态</th>
-                    <th class="text-left py-2 text-dashboard-muted font-medium">操作</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr
-                    v-for="task in closureData.tasks"
-                    :key="task.id"
-                    class="border-b border-dashboard-border/40 hover:bg-dashboard-dark/30"
+                <div class="space-y-2">
+                  <div
+                    v-for="(task, tIdx) in item.tasks"
+                    :key="tIdx"
+                    class="rounded border border-dashboard-border/60 bg-dashboard-dark/50 p-3 flex items-center justify-between gap-3"
                   >
-                    <td class="py-2 text-dashboard-text">{{ task.indicator }}</td>
-                    <td class="py-2 text-dashboard-muted max-w-[180px] truncate">{{ task.rootCause }}</td>
-                    <td class="py-2 text-dashboard-muted max-w-[180px] truncate">{{ task.action }}</td>
-                    <td class="py-2 text-primary-300">{{ task.owner }}</td>
-                    <td class="py-2 text-dashboard-muted">{{ task.deadline }}</td>
-                    <td class="py-2">
-                      <span class="px-2 py-0.5 rounded-full text-[11px]" :class="getTaskStatusClass(task.status)">
-                        {{ task.status }}
-                      </span>
-                    </td>
-                    <td class="py-2">
-                      <button
-                        @click="openTaskDispatch(task)"
-                        class="px-2 py-0.5 rounded bg-primary-500/20 text-primary-300 hover:bg-primary-500/30 transition-colors text-[11px]"
-                      >
-                        派发
-                      </button>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-              <div v-if="!closureData.tasks.length" class="text-sm text-dashboard-muted py-4 text-center">
-                暂无待整改任务
+                    <div class="flex-1 min-w-0">
+                      <div class="text-xs font-medium text-dashboard-text truncate">{{ task.action }}</div>
+                      <div class="text-[11px] text-dashboard-muted mt-0.5">
+                        {{ task.owner }} · 截止 {{ task.deadline }}
+                      </div>
+                    </div>
+                    <button
+                      @click="openTaskDispatch(task)"
+                      class="flex-shrink-0 px-3 py-1.5 rounded-lg bg-primary-500/20 text-primary-300 hover:bg-primary-500/30 transition-colors text-xs"
+                    >
+                      ✉️ 派发
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
+
+        <!-- 无异常提示 -->
+        <div v-else class="rounded-lg border border-status-green/30 bg-status-green/5 p-8 text-center">
+          <span class="text-3xl">🎉</span>
+          <div class="text-sm text-status-green mt-2 font-medium">所有指标均已达成目标，无需详细分析</div>
+        </div>
+
       </section>
 
       <!-- 智能洞察面板 -->
@@ -636,7 +670,7 @@
     >
       <div class="w-[700px] max-h-[80vh] bg-dashboard-card border border-dashboard-border rounded-xl overflow-hidden flex flex-col" @click.stop>
         <div class="p-4 border-b border-dashboard-border flex items-center justify-between">
-          <h4 class="text-base font-semibold text-dashboard-text">📋 会议纪要</h4>
+          <h4 class="text-base font-semibold text-dashboard-text">📋 报告概览</h4>
           <div class="flex items-center gap-2">
             <button
               @click="copyMinutes"
@@ -680,6 +714,7 @@
 <script setup>
 import { computed, onUnmounted, reactive, ref, watch } from 'vue'
 import TaskDispatchPanel from '../components/common/TaskDispatchPanel.vue'
+import { bscIndicators, lastMonthPdcaData } from '../composables/useMockData'
 
 defineEmits(['exit', 'open-chatbi'])
 
@@ -730,6 +765,139 @@ const selectTemplate = (template) => {
 }
 
 // ================== 周期对比 ==================
+
+// ================== 经营成绩单数据 ==================
+const dimensionMeta = {
+  finance: { name: '财务维度', icon: '💰' },
+  customer: { name: '客户维度', icon: '👥' },
+  operation: { name: '内部运营', icon: '⚙️' },
+  learning: { name: '学习成长', icon: '📚' }
+}
+
+const formatScorecardValue = (val, unit) => {
+  if (unit === '%') return `${val}%`
+  if (unit === '天') return `${val}天`
+  if (val >= 100000000) return (val / 100000000).toFixed(2) + '亿'
+  if (val >= 10000) return (val / 10000).toFixed(1) + '万'
+  return val.toLocaleString()
+}
+
+const getStatusByRate = (rate, inverse) => {
+  if (inverse) {
+    if (rate <= 1) return 'green'
+    if (rate <= 1.15) return 'yellow'
+    return 'red'
+  }
+  if (rate >= 0.95) return 'green'
+  if (rate >= 0.85) return 'yellow'
+  return 'red'
+}
+
+const getRateClass = (status) => {
+  if (status === 'green') return 'text-status-green'
+  if (status === 'yellow') return 'text-status-yellow'
+  return 'text-status-red'
+}
+
+const scorecardData = computed(() => {
+  const result = {}
+  for (const [dimKey, dimension] of Object.entries(bscIndicators)) {
+    const meta = dimensionMeta[dimKey]
+    const rows = dimension.indicators.map(ind => {
+      const rate = (ind.actual / ind.target * 100)
+      const accActual = ind.accActual ?? ind.actual
+      const accTarget = ind.accTarget ?? ind.target
+      const accRate = (accActual / accTarget * 100)
+      const status = getStatusByRate(ind.actual / ind.target, ind.inverse)
+      const accStatus = getStatusByRate(accActual / accTarget, ind.inverse)
+      const gapValue = ind.actual - ind.target
+      // 对于反向指标（如库存天数，越低越好），差距方向要反转显示
+      const isGapPositive = ind.inverse ? gapValue <= 0 : gapValue >= 0
+      const gapStr = ind.unit === '%'
+        ? `${Math.abs(ind.actual - ind.target).toFixed(1)}pp`
+        : formatScorecardValue(Math.abs(gapValue), ind.unit)
+
+      return {
+        id: ind.id,
+        name: ind.name,
+        target: ind.target,
+        actual: ind.actual,
+        unit: ind.unit,
+        inverse: ind.inverse,
+        weight: ind.weight,
+        targetStr: formatScorecardValue(ind.target, ind.unit),
+        actualStr: formatScorecardValue(ind.actual, ind.unit),
+        rate: rate.toFixed(1),
+        rateClass: getRateClass(status),
+        accTarget: accTarget,
+        accActual: accActual,
+        accTargetStr: formatScorecardValue(accTarget, ind.unit),
+        accActualStr: formatScorecardValue(accActual, ind.unit),
+        accRate: accRate.toFixed(1),
+        accRateClass: getRateClass(accStatus),
+        status,
+        accStatus,
+        isAbnormal: status === 'red',
+        gapValue,
+        gapStr: (isGapPositive ? '' : '-') + gapStr,
+        dimensionName: meta.name
+      }
+    })
+    result[dimKey] = { name: meta.name, icon: meta.icon, rows }
+  }
+  return result
+})
+
+const abnormalIndicators = computed(() => {
+  const items = []
+  for (const [dimKey, dimension] of Object.entries(scorecardData.value)) {
+    for (const row of dimension.rows) {
+      if (row.status === 'red' || row.status === 'yellow') {
+        // 获取根因模板
+        const templateId = getTemplateIdForIndicator(row.name)
+        const causeTemplates = rootCauseTemplates[templateId] || rootCauseTemplates.overview
+        const causes = causeTemplates.map((t, i) => ({
+          dimension: t.dimension,
+          factor: t.factor,
+          contribution: [48, 32, 20][i] || 10,
+          note: t.note
+        }))
+        // 生成任务
+        const tasks = causeTemplates.slice(0, 2).map((t, i) => ({
+          indicator: row.name,
+          rootCause: `${t.dimension}：${t.factor}`,
+          action: t.action,
+          owner: t.owner,
+          department: t.department,
+          deadline: addDays(analysisContext.endDate, 7 + i * 3),
+          status: i === 0 ? '进行中' : '待启动'
+        }))
+        items.push({ ...row, causes, tasks })
+      }
+    }
+  }
+  return items
+})
+
+const getTemplateIdForIndicator = (name) => {
+  const map = {
+    '报单收入': 'baodan-income',
+    '利润': 'profit',
+    '线上营销收入': 'online-income',
+    '报单人数': 'customer-pie',
+    '合高合格人次': 'customer-pie',
+    '新人经营率': 'customer-pie'
+  }
+  return map[name] || 'overview'
+}
+
+// PDCA追踪统计
+const pdcaStats = computed(() => {
+  const completed = lastMonthPdcaData.filter(i => i.status === '已完成').length
+  const partial = lastMonthPdcaData.filter(i => i.status === '部分完成').length
+  const uncompleted = lastMonthPdcaData.filter(i => i.status === '未完成').length
+  return { completed, partial, uncompleted }
+})
 const comparePeriods = [
   { value: 'mom', label: '环比' },
   { value: 'yoy', label: '同比' },
@@ -872,7 +1040,7 @@ const generateMeetingMinutes = () => {
 
   const content = `
 ═══════════════════════════════════════════════════════════
-                    经营分析会议纪要
+                    经营分析报告概览
 ═══════════════════════════════════════════════════════════
 
 【会议基本信息】
@@ -930,7 +1098,7 @@ ${closureData.value.tasks.map((task, i) =>
 
 const copyMinutes = () => {
   navigator.clipboard.writeText(meetingMinutesContent.value)
-  showNotice('纪要已复制到剪贴板')
+  showNotice('报告概览已复制到剪贴板')
 }
 
 const downloadMinutes = () => {
@@ -938,10 +1106,10 @@ const downloadMinutes = () => {
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
-  a.download = `经营分析会纪要_${new Date().toLocaleDateString('zh-CN').replace(/\//g, '-')}.txt`
+  a.download = `经营分析报告概览_${new Date().toLocaleDateString('zh-CN').replace(/\//g, '-')}.txt`
   a.click()
   URL.revokeObjectURL(url)
-  showNotice('纪要已下载')
+  showNotice('报告概览已下载')
 }
 
 // ================== 原有功能 ==================
@@ -953,13 +1121,33 @@ const businessLines = [
 ]
 
 const metricTemplates = [
-  { id: 'baodan-income', title: '报单收入趋势', description: '计划/实际/达成率组合图', baseTarget: 47500000 },
-  { id: 'online-income', title: '线上营销收入趋势', description: '线上业务增长趋势图', baseTarget: 8640000 },
-  { id: 'profit', title: '利润趋势', description: '利润计划达成跟踪图', baseTarget: 12600000 },
-  { id: 'customer-pie', title: '报单人数渠道构成', description: '客户来源结构变化', baseTarget: 145000 },
-  { id: 'alerts', title: '预警摘要指标', description: '高风险预警指标跟踪', baseTarget: 100 },
-  { id: 'overview', title: '经营概览指标', description: '核心 KPI 汇总观察', baseTarget: 1000 }
+  { id: 'baodan-income', title: '报单收入趋势', description: '计划/实际/达成率组合图', baseTarget: 47500000, category: 'finance' },
+  { id: 'online-income', title: '线上营销收入趋势', description: '线上业务增长趋势图', baseTarget: 8640000, category: 'finance' },
+  { id: 'profit', title: '利润趋势', description: '利润计划达成跟踪图', baseTarget: 12600000, category: 'finance' },
+  { id: 'customer-pie', title: '报单人数渠道构成', description: '客户来源结构变化', baseTarget: 145000, category: 'customer' },
+  { id: 'new-person-rate', title: '新人经营率', description: '新人帮扶与经营跟踪', baseTarget: 85, category: 'customer' },
+  { id: 'alerts', title: '预警摘要指标', description: '高风险预警指标跟踪', baseTarget: 100, category: 'operation' },
+  { id: 'overview', title: '经营概览指标', description: '核心 KPI 汇总观察', baseTarget: 1000, category: 'operation' },
+  { id: 'talent-reserve', title: '人才储备率', description: '关键岗位人才储备跟踪', baseTarget: 80, category: 'learning' },
+  { id: 'inventory-days', title: '库存周转天数', description: '产成品库存效率分析', baseTarget: 45, category: 'operation' }
 ]
+
+const metricCategoryNames = {
+  finance: '💰 财务类',
+  customer: '👥 客户类',
+  operation: '⚙️ 经营类',
+  learning: '📚 学习成长类'
+}
+
+const groupedMetricTemplates = computed(() => {
+  const groups = {}
+  for (const template of metricTemplates) {
+    const cat = template.category || 'operation'
+    if (!groups[cat]) groups[cat] = []
+    groups[cat].push(template)
+  }
+  return groups
+})
 
 const rootCauseTemplates = {
   'baodan-income': [
@@ -1215,6 +1403,16 @@ const handleDispatchSubmit = () => { showNotice('任务已派发') }
 const handleExport = () => {
   showExportModal.value = false
   showNotice(`正在导出 ${exportFormat.value} 报告...`)
+}
+
+const scrollToSection = (sectionId) => {
+  const el = document.querySelector(`[data-section="${sectionId}"]`)
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
+const scrollToIndicator = (indicatorId) => {
+  const el = document.getElementById('indicator-' + indicatorId)
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
 const toggleCompare = (period) => {

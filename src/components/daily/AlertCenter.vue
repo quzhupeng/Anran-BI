@@ -28,13 +28,13 @@
         ]"
       >
         <div class="flex items-start gap-3">
-          <span 
+          <span
             class="w-2 h-2 rounded-full mt-1.5 flex-shrink-0"
             :class="alert.level === 'red' ? 'bg-status-red status-pulse' : 'bg-status-yellow'"
           ></span>
           <div class="flex-1 min-w-0">
             <div class="flex items-center justify-between">
-              <h4 
+              <h4
                 class="text-sm font-medium truncate"
                 :class="alert.level === 'red' ? 'text-status-red' : 'text-status-yellow'"
               >
@@ -43,6 +43,14 @@
               <span class="text-xs text-dashboard-muted flex-shrink-0 ml-2">{{ alert.time }}</span>
             </div>
             <p class="text-xs text-dashboard-muted mt-1">{{ alert.detail }}</p>
+            <!-- 红色预警：一键派发任务按钮 -->
+            <button
+              v-if="alert.level === 'red'"
+              @click.stop="$emit('dispatch-alert', alert)"
+              class="mt-1.5 text-[11px] px-2 py-0.5 rounded bg-status-red/15 text-status-red hover:bg-status-red/25 transition-colors"
+            >
+              ✉️ 一键派发任务
+            </button>
           </div>
         </div>
       </div>
@@ -66,7 +74,7 @@
 <script setup>
 import { alertData } from '../../composables/useMockData'
 
-defineEmits(['open-report', 'open-alert-config'])
+defineEmits(['open-report', 'open-alert-config', 'dispatch-alert'])
 
 const alerts = alertData
 </script>
