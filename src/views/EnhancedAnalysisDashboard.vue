@@ -55,10 +55,19 @@
 
             <!-- 会议纪要 -->
             <button
+              @click="showMeetingNotes = !showMeetingNotes"
+              class="px-3 py-1.5 rounded-lg text-sm transition-colors"
+              :class="showMeetingNotes ? 'bg-primary-500 text-white' : 'border border-dashboard-border text-dashboard-muted hover:text-dashboard-text'"
+            >
+              📝 会议纪要
+            </button>
+
+            <!-- 报告概览 -->
+            <button
               @click="generateMeetingMinutes"
               class="px-3 py-1.5 rounded-lg border border-dashboard-border text-sm text-dashboard-muted hover:text-dashboard-text transition-colors"
             >
-              📝 报告概览
+              📋 报告概览
             </button>
 
             <!-- 导出报告 -->
@@ -131,6 +140,140 @@
       </div>
     </div>
 
+    <!-- 会议纪要浮动面板 -->
+    <transition name="slide-down">
+      <div v-if="showMeetingNotes" class="sticky top-[120px] z-15 border-b border-primary-500/30 bg-dashboard-card/95 backdrop-blur-sm shadow-lg">
+        <div class="px-6 py-4">
+          <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center gap-2">
+              <span class="text-base">📝</span>
+              <h3 class="text-sm font-semibold text-dashboard-text">会议纪要</h3>
+              <span class="text-[10px] px-2 py-0.5 rounded-full bg-primary-500/20 text-primary-300">
+                {{ meetingNotesTasks.length + meetingNotesReminders.length }} 条记录
+              </span>
+            </div>
+            <div class="flex items-center gap-2">
+              <button
+                @click="dispatchAllMeetingNotes"
+                class="px-3 py-1.5 rounded-lg bg-primary-500 text-white text-xs font-medium hover:bg-primary-600 transition-colors"
+              >
+                ✉️ 一键派发
+              </button>
+              <button
+                @click="showMeetingNotes = false"
+                class="w-7 h-7 flex items-center justify-center rounded text-dashboard-muted hover:text-dashboard-text hover:bg-dashboard-dark/40 transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <!-- 任务板块 -->
+            <div class="bg-dashboard-dark/40 rounded-lg p-3 border border-dashboard-border">
+              <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full bg-primary-400"></span>
+                  <span class="text-xs font-semibold text-dashboard-text">任务</span>
+                  <span class="text-[10px] text-dashboard-muted">（{{ meetingNotesTasks.length }}）</span>
+                </div>
+                <button
+                  @click="addMeetingNotesTask"
+                  class="text-[10px] px-1.5 py-0.5 rounded border border-primary-500/30 text-primary-300 hover:bg-primary-500/10 transition-colors"
+                >
+                  + 新增
+                </button>
+              </div>
+              <div class="space-y-2 max-h-[180px] overflow-y-auto">
+                <div
+                  v-for="(task, tIdx) in meetingNotesTasks"
+                  :key="tIdx"
+                  class="rounded border border-dashboard-border/60 bg-dashboard-dark/50 p-2 text-xs"
+                >
+                  <div class="flex items-start gap-2">
+                    <span class="flex-shrink-0 mt-0.5 text-[10px] font-bold text-primary-300">T{{ tIdx + 1 }}</span>
+                    <div class="flex-1 space-y-1.5">
+                      <input
+                        v-model="task.content"
+                        placeholder="任务内容..."
+                        class="w-full bg-transparent border-b border-dashboard-border/40 text-dashboard-text placeholder-dashboard-muted/50 focus:outline-none focus:border-primary-500/50 pb-0.5 text-xs"
+                      />
+                      <div class="flex items-center gap-2">
+                        <input
+                          v-model="task.owner"
+                          placeholder="责任人"
+                          class="w-20 bg-transparent border-b border-dashboard-border/40 text-primary-300 placeholder-dashboard-muted/50 focus:outline-none focus:border-primary-500/50 pb-0.5 text-[10px]"
+                        />
+                        <input
+                          v-model="task.deadline"
+                          type="date"
+                          class="bg-transparent border-b border-dashboard-border/40 text-dashboard-muted focus:outline-none focus:border-primary-500/50 pb-0.5 text-[10px]"
+                        />
+                      </div>
+                    </div>
+                    <button
+                      @click="meetingNotesTasks.splice(tIdx, 1)"
+                      class="flex-shrink-0 text-dashboard-muted hover:text-status-red text-[10px]"
+                    >✕</button>
+                  </div>
+                </div>
+                <div v-if="meetingNotesTasks.length === 0" class="text-center py-3 text-[10px] text-dashboard-muted">
+                  暂无任务，点击"+ 新增"添加
+                </div>
+              </div>
+            </div>
+
+            <!-- 提醒项板块 -->
+            <div class="bg-dashboard-dark/40 rounded-lg p-3 border border-dashboard-border">
+              <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full bg-status-yellow"></span>
+                  <span class="text-xs font-semibold text-dashboard-text">提醒项</span>
+                  <span class="text-[10px] text-dashboard-muted">（{{ meetingNotesReminders.length }}）</span>
+                </div>
+                <button
+                  @click="addMeetingNotesReminder"
+                  class="text-[10px] px-1.5 py-0.5 rounded border border-status-yellow/30 text-status-yellow hover:bg-status-yellow/10 transition-colors"
+                >
+                  + 新增
+                </button>
+              </div>
+              <div class="space-y-2 max-h-[180px] overflow-y-auto">
+                <div
+                  v-for="(reminder, rIdx) in meetingNotesReminders"
+                  :key="rIdx"
+                  class="rounded border border-dashboard-border/60 bg-dashboard-dark/50 p-2 text-xs"
+                >
+                  <div class="flex items-start gap-2">
+                    <span class="flex-shrink-0 mt-0.5 text-[10px] font-bold text-status-yellow">R{{ rIdx + 1 }}</span>
+                    <div class="flex-1 space-y-1.5">
+                      <input
+                        v-model="reminder.content"
+                        placeholder="提醒事项..."
+                        class="w-full bg-transparent border-b border-dashboard-border/40 text-dashboard-text placeholder-dashboard-muted/50 focus:outline-none focus:border-primary-500/50 pb-0.5 text-xs"
+                      />
+                      <input
+                        v-model="reminder.target"
+                        placeholder="提醒对象（部门/人员）"
+                        class="w-full bg-transparent border-b border-dashboard-border/40 text-primary-300 placeholder-dashboard-muted/50 focus:outline-none focus:border-primary-500/50 pb-0.5 text-[10px]"
+                      />
+                    </div>
+                    <button
+                      @click="meetingNotesReminders.splice(rIdx, 1)"
+                      class="flex-shrink-0 text-dashboard-muted hover:text-status-red text-[10px]"
+                    >✕</button>
+                  </div>
+                </div>
+                <div v-if="meetingNotesReminders.length === 0" class="text-center py-3 text-[10px] text-dashboard-muted">
+                  暂无提醒项，点击"+ 新增"添加
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </transition>
+
     <!-- 主内容区 -->
     <main class="flex-1 flex">
       <!-- 指标卡片库（侧边栏） - 固定不动 -->
@@ -152,61 +295,60 @@
             @click="scrollToSection('pdca-tracking')"
             class="w-full text-left text-xs px-2 py-1.5 rounded hover:bg-primary-500/10 text-primary-400 hover:text-primary-300 transition-colors"
           >
-            🔄 PDCA追踪
+            🔄 任务追踪
           </button>
           <button
             @click="scrollToSection('scorecard')"
             class="w-full text-left text-xs px-2 py-1.5 rounded hover:bg-primary-500/10 text-dashboard-muted hover:text-dashboard-text transition-colors"
           >
-            📋 经营成绩单
+            📋 经营情况概览
           </button>
         </div>
 
-        <div v-if="abnormalIndicators.length > 0" class="p-3 space-y-1 border-b border-dashboard-border">
-          <div class="text-[10px] text-dashboard-muted uppercase tracking-wider mb-2">异常指标分析</div>
-          <button
-            v-for="item in abnormalIndicators"
-            :key="item.id"
-            @click="scrollToIndicator(item.id)"
-            class="w-full text-left flex items-center gap-2 text-xs px-2 py-1.5 rounded hover:bg-primary-500/10 transition-colors"
-            :class="item.status === 'red' ? 'text-status-red' : 'text-status-yellow'"
-          >
-            <span
-              class="w-2 h-2 rounded-full flex-shrink-0"
-              :class="item.status === 'red' ? 'bg-status-red' : 'bg-status-yellow'"
-            ></span>
-            <span class="truncate">{{ item.name }}</span>
-            <span class="ml-auto text-[10px]">{{ item.rate }}%</span>
-          </button>
-        </div>
-
-        <!-- 指标卡片库：分类展示 -->
-        <div class="p-3 space-y-3">
-          <div class="text-[10px] text-dashboard-muted uppercase tracking-wider">添加更多指标</div>
-          <div v-for="(templates, catKey) in groupedMetricTemplates" :key="catKey" class="space-y-1.5">
-            <div class="text-[11px] font-medium text-dashboard-text px-1">{{ metricCategoryNames[catKey] || catKey }}</div>
-            <div
-              v-for="template in templates"
-              :key="template.id"
-              draggable="true"
-              @dragstart="onDragStartLibrary(template.id)"
-              class="bg-dashboard-dark/40 border border-dashboard-border rounded-lg p-2.5 cursor-grab hover:border-primary-500/40 transition-colors"
-            >
-              <div class="flex items-center justify-between gap-2">
-                <div class="min-w-0">
-                  <div class="text-xs font-medium text-dashboard-text truncate">{{ template.title }}</div>
-                  <div class="text-[10px] text-dashboard-muted mt-0.5 truncate">{{ template.description }}</div>
-                </div>
-                <button
-                  @click="toggleMetricCard(template.id)"
-                  class="text-[10px] px-1.5 py-0.5 rounded transition-colors whitespace-nowrap flex-shrink-0"
-                  :class="isMetricAdded(template.id) ? 'bg-status-green/20 text-status-green hover:bg-status-red/20 hover:text-status-red' : 'bg-primary-500/20 text-primary-400 hover:bg-primary-500/30'"
-                >
-                  {{ isMetricAdded(template.id) ? '✓ 已添加' : '+ 添加' }}
-                </button>
-              </div>
-            </div>
+        <!-- 指标分析选择 -->
+        <div class="p-3 space-y-1.5">
+          <div class="flex items-center justify-between mb-1">
+            <div class="text-[10px] text-dashboard-muted uppercase tracking-wider">指标分析选择</div>
+            <span class="text-[10px] text-primary-300 font-medium">{{ visibleAnalysisIndicators.length }} 项已选</span>
           </div>
+          <p class="text-[10px] text-dashboard-muted mb-2">点击切换指标在右侧分析中的显隐</p>
+
+          <template v-for="(dimension, dimKey) in scorecardData" :key="dimKey">
+            <div class="text-[10px] font-medium text-dashboard-muted mt-2.5 mb-1 px-1">
+              {{ dimension.icon }} {{ dimension.name }}
+            </div>
+            <div
+              v-for="row in dimension.rows"
+              :key="row.id"
+              class="flex items-center gap-1.5 text-xs px-2 py-1.5 rounded cursor-pointer transition-all"
+              :class="activeAnalysisIds.includes(row.id)
+                ? 'bg-primary-500/10 hover:bg-primary-500/15'
+                : 'opacity-40 hover:opacity-70 hover:bg-dashboard-dark/30'"
+              @click="toggleAnalysisId(row.id)"
+            >
+              <span
+                class="w-2 h-2 rounded-full flex-shrink-0"
+                :class="{
+                  'bg-status-red': row.status === 'red',
+                  'bg-status-yellow': row.status === 'yellow',
+                  'bg-status-green': row.status === 'green'
+                }"
+              ></span>
+              <span
+                class="truncate flex-1"
+                :class="row.status === 'green' ? 'text-dashboard-muted' : (row.status === 'red' ? 'text-status-red' : 'text-status-yellow')"
+              >
+                {{ row.name }}
+              </span>
+              <span class="text-[10px] text-dashboard-muted">{{ row.rate }}%</span>
+              <span
+                class="text-[10px] w-4 text-center"
+                :class="activeAnalysisIds.includes(row.id) ? 'text-status-green' : 'text-dashboard-muted'"
+              >
+                {{ activeAnalysisIds.includes(row.id) ? '✓' : '○' }}
+              </span>
+            </div>
+          </template>
         </div>
       </aside>
 
@@ -218,7 +360,7 @@
           <div class="flex items-center justify-between mb-4">
             <div class="flex items-center gap-2">
               <span class="text-lg">🔄</span>
-              <h4 class="text-base font-semibold text-dashboard-text">PDCA追踪 · 上月任务完成情况</h4>
+              <h4 class="text-base font-semibold text-dashboard-text">任务追踪</h4>
             </div>
             <div class="flex items-center gap-3 text-xs">
               <span class="px-2 py-0.5 rounded-full bg-status-green/20 text-status-green">
@@ -289,7 +431,7 @@
           <div class="flex items-center justify-between mb-4">
             <div class="flex items-center gap-2">
               <span class="text-lg">📋</span>
-              <h4 class="text-base font-semibold text-dashboard-text">经营成绩单</h4>
+              <h4 class="text-base font-semibold text-dashboard-text">经营情况概览</h4>
             </div>
             <span class="text-xs text-dashboard-muted">{{ dateRangeLabel }} · {{ currentBusinessLineLabel }}</span>
           </div>
@@ -345,159 +487,257 @@
           </div>
         </div>
 
-        <!-- ==================== 分述：异常指标逐一分析 ==================== -->
-        <div v-if="abnormalIndicators.length > 0" class="space-y-6">
+        <!-- ==================== 分述：指标逐一分析 ==================== -->
+        <div v-if="visibleAnalysisIndicators.length > 0" class="space-y-6">
           <div class="flex items-center gap-2">
             <span class="text-lg">🔍</span>
-            <h4 class="text-base font-semibold text-dashboard-text">异常指标分析</h4>
-            <span class="text-xs text-dashboard-muted">（共 {{ abnormalIndicators.length }} 项未达标指标）</span>
+            <h4 class="text-base font-semibold text-dashboard-text">指标分析</h4>
+            <span class="text-xs text-dashboard-muted">（共 {{ visibleAnalysisIndicators.length }} 项，可在左侧增减）</span>
           </div>
 
           <div
-            v-for="item in abnormalIndicators"
+            v-for="item in visibleAnalysisIndicators"
             :key="item.id"
             :id="'indicator-' + item.id"
-            class="rounded-lg border border-status-red/20 bg-dashboard-dark/30 overflow-hidden"
+            class="rounded-lg border bg-dashboard-dark/30 overflow-hidden"
+            :class="item.isNormal ? 'border-status-green/20' : 'border-status-red/20'"
           >
-            <!-- 指标标题 -->
-            <div class="px-5 py-3 bg-status-red/5 border-b border-status-red/20 flex items-center justify-between">
-              <div class="flex items-center gap-3">
-                <span class="w-2.5 h-2.5 rounded-full bg-status-red status-pulse"></span>
-                <h5 class="text-sm font-semibold text-dashboard-text">{{ item.name }}</h5>
-                <span class="text-xs px-2 py-0.5 rounded-full bg-status-red/20 text-status-red">
-                  达成率 {{ item.rate }}%
-                </span>
+            <!-- ====== 达标指标：简化展示 ====== -->
+            <template v-if="item.isNormal">
+              <div class="px-5 py-3 bg-status-green/5 border-b border-status-green/20 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <span class="w-2.5 h-2.5 rounded-full bg-status-green"></span>
+                  <h5 class="text-sm font-semibold text-dashboard-text">{{ item.name }}</h5>
+                  <span class="text-xs px-2 py-0.5 rounded-full bg-status-green/20 text-status-green">
+                    达成率 {{ item.rate }}%
+                  </span>
+                </div>
+                <span class="text-xs text-dashboard-muted">{{ item.dimensionName }}</span>
               </div>
-              <span class="text-xs text-dashboard-muted">{{ item.dimensionName }}</span>
-            </div>
-
-            <div class="p-5 space-y-4">
-              <!-- 1. 数据概况（当月+累计） -->
-              <div class="grid grid-cols-2 gap-4">
-                <div class="bg-dashboard-dark/50 rounded-lg p-3 border border-dashboard-border">
-                  <div class="text-xs text-dashboard-muted mb-1">当月数据</div>
-                  <div class="flex items-baseline gap-2">
-                    <span class="text-xl font-bold text-dashboard-text">{{ item.actualStr }}</span>
-                    <span class="text-xs text-dashboard-muted">/ 目标 {{ item.targetStr }}</span>
-                  </div>
-                  <div class="text-xs mt-1" :class="item.rateClass">达成率 {{ item.rate }}%，差距 {{ item.gapStr }}</div>
-                </div>
-                <div class="bg-dashboard-dark/50 rounded-lg p-3 border border-dashboard-border">
-                  <div class="text-xs text-dashboard-muted mb-1">累计数据</div>
-                  <div class="flex items-baseline gap-2">
-                    <span class="text-xl font-bold text-dashboard-text">{{ item.accActualStr }}</span>
-                    <span class="text-xs text-dashboard-muted">/ 目标 {{ item.accTargetStr }}</span>
-                  </div>
-                  <div class="text-xs mt-1" :class="item.accRateClass">达成率 {{ item.accRate }}%</div>
-                </div>
-              </div>
-
-              <!-- 2. 差距分析 -->
-              <div class="bg-dashboard-dark/40 rounded-lg p-4 border border-dashboard-border">
-                <div class="flex items-center gap-2 mb-3">
-                  <span class="w-5 h-5 rounded-full bg-status-red/20 text-status-red flex items-center justify-center text-xs font-bold">1</span>
-                  <span class="text-sm font-medium text-dashboard-text">差距分析</span>
-                </div>
-                <div class="grid grid-cols-3 gap-3 text-center">
-                  <div>
-                    <div class="text-xs text-dashboard-muted">目标值</div>
-                    <div class="text-lg font-semibold text-dashboard-text mt-1">{{ item.targetStr }}</div>
-                  </div>
-                  <div>
-                    <div class="text-xs text-dashboard-muted">实际值</div>
-                    <div class="text-lg font-semibold text-dashboard-text mt-1">{{ item.actualStr }}</div>
-                  </div>
-                  <div>
-                    <div class="text-xs text-dashboard-muted">差距</div>
-                    <div class="text-lg font-semibold text-status-red mt-1">{{ item.gapStr }}</div>
-                  </div>
-                </div>
-                <div class="mt-3 h-2 rounded bg-dashboard-border overflow-hidden">
-                  <div
-                    class="h-full bg-status-red transition-all"
-                    :style="{ width: Math.min(100, parseFloat(item.rate)) + '%' }"
-                  ></div>
-                </div>
-              </div>
-
-              <!-- 3. 根因分析 (AI生成 + 可编辑) -->
-              <div class="bg-dashboard-dark/40 rounded-lg p-4 border border-dashboard-border">
-                <div class="flex items-center justify-between mb-3">
-                  <div class="flex items-center gap-2">
-                    <span class="w-5 h-5 rounded-full bg-status-yellow/20 text-status-yellow flex items-center justify-center text-xs font-bold">2</span>
-                    <span class="text-sm font-medium text-dashboard-text">根因分析</span>
-                  </div>
-                  <span class="text-[10px] px-2 py-0.5 rounded bg-primary-500/20 text-primary-300">🤖 AI辅助生成 · 可编辑</span>
-                </div>
-                <div class="space-y-2">
-                  <div
-                    v-for="(cause, cIdx) in item.causes"
-                    :key="cIdx"
-                    class="rounded border border-dashboard-border/60 bg-dashboard-dark/50 p-3"
-                  >
-                    <div class="flex items-center justify-between text-xs mb-2">
-                      <span class="text-dashboard-text font-medium">{{ cause.dimension }} · {{ cause.factor }}</span>
-                      <span class="text-status-yellow font-semibold">贡献度 {{ cause.contribution }}%</span>
+              <div class="p-5">
+                <div class="grid grid-cols-2 gap-4">
+                  <div class="bg-dashboard-dark/50 rounded-lg p-3 border border-dashboard-border">
+                    <div class="text-xs text-dashboard-muted mb-1">当月数据</div>
+                    <div class="flex items-baseline gap-2">
+                      <span class="text-xl font-bold text-dashboard-text">{{ item.actualStr }}</span>
+                      <span class="text-xs text-dashboard-muted">/ 目标 {{ item.targetStr }}</span>
                     </div>
-                    <div class="h-1.5 rounded bg-dashboard-border overflow-hidden mb-2">
-                      <div class="h-full bg-status-yellow" :style="{ width: `${cause.contribution}%` }"></div>
+                    <div class="text-xs mt-1 text-status-green">达成率 {{ item.rate }}%</div>
+                  </div>
+                  <div class="bg-dashboard-dark/50 rounded-lg p-3 border border-dashboard-border">
+                    <div class="text-xs text-dashboard-muted mb-1">累计数据</div>
+                    <div class="flex items-baseline gap-2">
+                      <span class="text-xl font-bold text-dashboard-text">{{ item.accActualStr }}</span>
+                      <span class="text-xs text-dashboard-muted">/ 目标 {{ item.accTargetStr }}</span>
                     </div>
-                    <div class="text-[11px] text-dashboard-muted">{{ cause.note }}</div>
+                    <div class="text-xs mt-1" :class="item.accRateClass">达成率 {{ item.accRate }}%</div>
                   </div>
                 </div>
-                <!-- 人工补充根因 -->
-                <div class="mt-3 pt-3 border-t border-dashboard-border/40">
-                  <div class="flex items-center gap-2 mb-2">
-                    <span class="text-xs font-medium text-dashboard-text">✍️ 人工补充根因分析</span>
-                    <span class="text-[10px] text-dashboard-muted">（可手动补充或修正AI分析结果）</span>
-                  </div>
-                  <textarea
-                    v-model="manualCauses[item.id]"
-                    placeholder="请输入人工分析的根因原因，补充AI分析..."
-                    class="w-full bg-dashboard-dark/60 border border-dashboard-border rounded-lg px-3 py-2 text-xs text-dashboard-text placeholder-dashboard-muted/50 resize-vertical focus:outline-none focus:border-primary-500/50 min-h-[60px]"
-                    rows="3"
-                  ></textarea>
+                <div class="mt-3 text-center text-xs text-status-green py-2 rounded-lg bg-status-green/5 border border-status-green/10">
+                  ✅ 该指标已达标，表现良好
                 </div>
               </div>
+            </template>
 
-              <!-- 4. 改进对策与任务派发 -->
-              <div class="bg-dashboard-dark/40 rounded-lg p-4 border border-dashboard-border">
-                <div class="flex items-center justify-between mb-3">
-                  <div class="flex items-center gap-2">
-                    <span class="w-5 h-5 rounded-full bg-primary-500/20 text-primary-400 flex items-center justify-center text-xs font-bold">3</span>
-                    <span class="text-sm font-medium text-dashboard-text">改进对策与任务</span>
-                  </div>
-                  <span class="text-[10px] text-dashboard-muted">可编辑内容后派发</span>
+            <!-- ====== 异常指标：完整分析 ====== -->
+            <template v-else>
+              <!-- 指标标题 -->
+              <div class="px-5 py-3 bg-status-red/5 border-b border-status-red/20 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <span class="w-2.5 h-2.5 rounded-full bg-status-red status-pulse"></span>
+                  <h5 class="text-sm font-semibold text-dashboard-text">{{ item.name }}</h5>
+                  <span class="text-xs px-2 py-0.5 rounded-full bg-status-red/20 text-status-red">
+                    达成率 {{ item.rate }}%
+                  </span>
                 </div>
-                <div class="space-y-2">
-                  <div
-                    v-for="(task, tIdx) in item.tasks"
-                    :key="tIdx"
-                    class="rounded border border-dashboard-border/60 bg-dashboard-dark/50 p-3 flex items-center justify-between gap-3"
-                  >
-                    <div class="flex-1 min-w-0">
-                      <div class="text-xs font-medium text-dashboard-text truncate">{{ task.action }}</div>
-                      <div class="text-[11px] text-dashboard-muted mt-0.5">
-                        {{ task.owner }} · 截止 {{ task.deadline }}
-                      </div>
+                <span class="text-xs text-dashboard-muted">{{ item.dimensionName }}</span>
+              </div>
+
+              <div class="p-5 space-y-4">
+                <!-- 1. 数据概况 -->
+                <div class="grid grid-cols-2 gap-4">
+                  <div class="bg-dashboard-dark/50 rounded-lg p-3 border border-dashboard-border">
+                    <div class="text-xs text-dashboard-muted mb-1">当月数据</div>
+                    <div class="flex items-baseline gap-2">
+                      <span class="text-xl font-bold text-dashboard-text">{{ item.actualStr }}</span>
+                      <span class="text-xs text-dashboard-muted">/ 目标 {{ item.targetStr }}</span>
+                    </div>
+                    <div class="text-xs mt-1" :class="item.rateClass">达成率 {{ item.rate }}%，差距 {{ item.gapStr }}</div>
+                  </div>
+                  <div class="bg-dashboard-dark/50 rounded-lg p-3 border border-dashboard-border">
+                    <div class="text-xs text-dashboard-muted mb-1">累计数据</div>
+                    <div class="flex items-baseline gap-2">
+                      <span class="text-xl font-bold text-dashboard-text">{{ item.accActualStr }}</span>
+                      <span class="text-xs text-dashboard-muted">/ 目标 {{ item.accTargetStr }}</span>
+                    </div>
+                    <div class="text-xs mt-1" :class="item.accRateClass">达成率 {{ item.accRate }}%</div>
+                  </div>
+                </div>
+
+                <!-- 2. 差距分析 -->
+                <div class="bg-dashboard-dark/40 rounded-lg p-4 border border-dashboard-border">
+                  <div class="flex items-center gap-2 mb-3">
+                    <span class="w-5 h-5 rounded-full bg-status-red/20 text-status-red flex items-center justify-center text-xs font-bold">1</span>
+                    <span class="text-sm font-medium text-dashboard-text">差距分析</span>
+                  </div>
+                  <div class="grid grid-cols-3 gap-3 text-center">
+                    <div>
+                      <div class="text-xs text-dashboard-muted">目标值</div>
+                      <div class="text-lg font-semibold text-dashboard-text mt-1">{{ item.targetStr }}</div>
+                    </div>
+                    <div>
+                      <div class="text-xs text-dashboard-muted">实际值</div>
+                      <div class="text-lg font-semibold text-dashboard-text mt-1">{{ item.actualStr }}</div>
+                    </div>
+                    <div>
+                      <div class="text-xs text-dashboard-muted">差距</div>
+                      <div class="text-lg font-semibold text-status-red mt-1">{{ item.gapStr }}</div>
+                    </div>
+                  </div>
+                  <div class="mt-3 h-2 rounded bg-dashboard-border overflow-hidden">
+                    <div
+                      class="h-full bg-status-red transition-all"
+                      :style="{ width: Math.min(100, parseFloat(item.rate)) + '%' }"
+                    ></div>
+                  </div>
+                </div>
+
+                <!-- 3. 根因分析（Why分析法） -->
+                <div class="bg-dashboard-dark/40 rounded-lg p-4 border border-dashboard-border">
+                  <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center gap-2">
+                      <span class="w-5 h-5 rounded-full bg-status-yellow/20 text-status-yellow flex items-center justify-center text-xs font-bold">2</span>
+                      <span class="text-sm font-medium text-dashboard-text">根因分析</span>
+                      <span class="text-[10px] text-dashboard-muted">（请逐层追问Why，找出根本原因）</span>
                     </div>
                     <button
-                      @click="openTaskDispatch(task)"
-                      class="flex-shrink-0 px-3 py-1.5 rounded-lg bg-primary-500/20 text-primary-300 hover:bg-primary-500/30 transition-colors text-xs"
+                      @click="addWhyRow(item.id)"
+                      class="flex items-center gap-1 text-[11px] px-2 py-1 rounded-lg border border-primary-500/30 text-primary-300 hover:bg-primary-500/10 transition-colors"
+                      title="添加下一个Why"
                     >
-                      ✉️ 派发
+                      <span class="text-sm font-bold leading-none">+</span> 添加Why
+                    </button>
+                  </div>
+                  <!-- Why 列表 -->
+                  <div class="space-y-2.5">
+                    <div
+                      v-for="(whyItem, wIdx) in getWhyRows(item.id)"
+                      :key="wIdx"
+                      class="flex items-start gap-2"
+                    >
+                      <span class="flex-shrink-0 mt-2 w-14 text-xs font-bold text-status-yellow">Why{{ wIdx + 1 }}:</span>
+                      <div class="flex-1 relative">
+                        <textarea
+                          v-model="whyItem.content"
+                          :placeholder="wIdx === 0 ? '为什么该指标未达成？请输入直接原因...' : '为什么会出现上一层原因？请继续深挖...'"
+                          class="w-full bg-dashboard-dark/60 border border-dashboard-border rounded-lg px-3 py-2 text-xs text-dashboard-text placeholder-dashboard-muted/50 resize-none focus:outline-none focus:border-primary-500/50 min-h-[38px]"
+                          rows="1"
+                          @input="autoResizeTextarea($event)"
+                        ></textarea>
+                      </div>
+                      <button
+                        v-if="getWhyRows(item.id).length > 1"
+                        @click="removeWhyRow(item.id, wIdx)"
+                        class="flex-shrink-0 mt-1.5 w-6 h-6 flex items-center justify-center rounded text-dashboard-muted hover:text-status-red hover:bg-status-red/10 transition-colors text-xs"
+                        title="删除此行"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  </div>
+                  <!-- AI辅助生成 -->
+                  <div class="mt-3 pt-3 border-t border-dashboard-border/40 flex items-center justify-between">
+                    <span class="text-[10px] text-dashboard-muted">人工分析为主，AI 可辅助提供参考建议</span>
+                    <button
+                      @click="aiGenerateWhys(item)"
+                      class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary-500/15 text-primary-300 hover:bg-primary-500/25 transition-colors text-xs"
+                    >
+                      🤖 AI辅助生成
                     </button>
                   </div>
                 </div>
+
+                <!-- 4. 改善策略及行动计划 -->
+                <div class="bg-dashboard-dark/40 rounded-lg p-4 border border-dashboard-border">
+                  <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center gap-2">
+                      <span class="w-5 h-5 rounded-full bg-primary-500/20 text-primary-400 flex items-center justify-center text-xs font-bold">3</span>
+                      <span class="text-sm font-medium text-dashboard-text">改善策略及行动计划</span>
+                    </div>
+                    <span class="text-[10px] text-dashboard-muted">可编辑内容后派发</span>
+                  </div>
+
+                  <!-- 策略说明 -->
+                  <div class="mb-3 rounded border border-primary-500/20 bg-primary-500/5 p-3">
+                    <div class="flex items-center gap-1.5 mb-1.5">
+                      <span class="text-xs font-semibold text-primary-300">策略方向</span>
+                    </div>
+                    <textarea
+                      v-model="getStrategy(item.id).content"
+                      class="w-full bg-transparent text-xs text-dashboard-text placeholder-dashboard-muted/50 resize-none focus:outline-none min-h-[36px] leading-relaxed"
+                      rows="2"
+                      @input="autoResizeTextarea($event)"
+                    ></textarea>
+                  </div>
+
+                  <!-- 行动计划列表 -->
+                  <div class="space-y-2">
+                    <div
+                      v-for="(plan, pIdx) in getActionPlans(item.id)"
+                      :key="pIdx"
+                      class="rounded border border-dashboard-border/60 bg-dashboard-dark/50 p-3"
+                    >
+                      <div class="flex items-start gap-2">
+                        <span class="flex-shrink-0 w-5 h-5 rounded-full bg-primary-500/20 text-primary-400 flex items-center justify-center text-[10px] font-bold mt-0.5">{{ pIdx + 1 }}</span>
+                        <div class="flex-1 min-w-0 space-y-1.5">
+                          <textarea
+                            v-model="plan.content"
+                            placeholder="行动计划内容..."
+                            class="w-full bg-transparent text-xs text-dashboard-text placeholder-dashboard-muted/50 resize-none focus:outline-none min-h-[20px] leading-relaxed"
+                            rows="1"
+                            @input="autoResizeTextarea($event)"
+                          ></textarea>
+                          <div class="flex items-center gap-3 text-[10px]">
+                            <span class="text-dashboard-muted">责任人：</span>
+                            <input
+                              v-model="plan.owner"
+                              placeholder="责任人"
+                              class="bg-transparent border-b border-dashboard-border/40 text-primary-300 placeholder-dashboard-muted/50 focus:outline-none focus:border-primary-500/50 pb-0.5 text-[10px] w-28"
+                            />
+                            <span class="text-dashboard-muted">截止：</span>
+                            <input
+                              v-model="plan.deadline"
+                              type="date"
+                              class="bg-transparent border-b border-dashboard-border/40 text-dashboard-muted focus:outline-none focus:border-primary-500/50 pb-0.5 text-[10px]"
+                            />
+                          </div>
+                        </div>
+                        <button
+                          @click="openTaskDispatch({ indicator: item.name, action: plan.content, owner: plan.owner, department: '直销事业部', deadline: plan.deadline })"
+                          class="flex-shrink-0 px-2.5 py-1 rounded-lg bg-primary-500/20 text-primary-300 hover:bg-primary-500/30 transition-colors text-[10px]"
+                        >
+                          ✉️ 派发
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  <!-- 添加行动计划 -->
+                  <button
+                    @click="addActionPlan(item.id)"
+                    class="mt-2 w-full py-1.5 rounded-lg border border-dashed border-dashboard-border/60 text-[10px] text-dashboard-muted hover:text-primary-300 hover:border-primary-500/30 transition-colors"
+                  >
+                    + 添加行动计划
+                  </button>
+                </div>
               </div>
-            </div>
+            </template>
           </div>
         </div>
 
-        <!-- 无异常提示 -->
-        <div v-else class="rounded-lg border border-status-green/30 bg-status-green/5 p-8 text-center">
-          <span class="text-3xl">🎉</span>
-          <div class="text-sm text-status-green mt-2 font-medium">所有指标均已达成目标，无需详细分析</div>
+        <!-- 无选中指标提示 -->
+        <div v-else class="rounded-lg border border-dashboard-border/30 bg-dashboard-dark/20 p-8 text-center">
+          <span class="text-3xl">📊</span>
+          <div class="text-sm text-dashboard-muted mt-2">请在左侧选择需要分析的指标</div>
         </div>
 
       </section>
@@ -905,6 +1145,82 @@ const getTemplateIdForIndicator = (name) => {
   return map[name] || 'overview'
 }
 
+// 模板ID → BSC指标ID映射
+const templateToIndicatorIds = {
+  'baodan-income': ['f1'],
+  'online-income': ['f3'],
+  'profit': ['f2'],
+  'customer-pie': ['c1', 'c2'],
+  'new-person-rate': ['c3'],
+  'alerts': [],
+  'overview': [],
+  'talent-reserve': ['l2'],
+  'inventory-days': ['o2']
+}
+
+// 控制右侧分析区显示哪些指标
+const activeAnalysisIds = ref([])
+
+// 初始化：默认选中所有异常指标
+const initActiveAnalysisIds = () => {
+  const ids = []
+  for (const dimension of Object.values(scorecardData.value)) {
+    for (const row of dimension.rows) {
+      if (row.status === 'red' || row.status === 'yellow') {
+        ids.push(row.id)
+      }
+    }
+  }
+  activeAnalysisIds.value = ids
+}
+
+// 所有指标的分析数据（含正常和异常）
+const allAnalysisData = computed(() => {
+  const items = []
+  for (const [dimKey, dimension] of Object.entries(scorecardData.value)) {
+    for (const row of dimension.rows) {
+      if (row.status === 'red' || row.status === 'yellow') {
+        const templateId = getTemplateIdForIndicator(row.name)
+        const causeTemplates = rootCauseTemplates[templateId] || rootCauseTemplates.overview
+        const causes = causeTemplates.map((t, i) => ({
+          dimension: t.dimension,
+          factor: t.factor,
+          contribution: [48, 32, 20][i] || 10,
+          note: t.note
+        }))
+        const tasks = causeTemplates.slice(0, 2).map((t, i) => ({
+          indicator: row.name,
+          rootCause: `${t.dimension}：${t.factor}`,
+          action: t.action,
+          owner: t.owner,
+          department: t.department,
+          deadline: addDays(analysisContext.endDate, 7 + i * 3),
+          status: i === 0 ? '进行中' : '待启动'
+        }))
+        items.push({ ...row, causes, tasks, isNormal: false })
+      } else {
+        items.push({ ...row, causes: [], tasks: [], isNormal: true })
+      }
+    }
+  }
+  return items
+})
+
+// 右侧实际显示的指标（受 activeAnalysisIds 控制）
+const visibleAnalysisIndicators = computed(() => {
+  return allAnalysisData.value.filter(item => activeAnalysisIds.value.includes(item.id))
+})
+
+// 切换单个指标的分析显示
+const toggleAnalysisId = (id) => {
+  const idx = activeAnalysisIds.value.indexOf(id)
+  if (idx !== -1) {
+    activeAnalysisIds.value.splice(idx, 1)
+  } else {
+    activeAnalysisIds.value.push(id)
+  }
+}
+
 // PDCA追踪统计
 const pdcaStats = computed(() => {
   const completed = lastMonthPdcaData.filter(i => i.status === '已完成').length
@@ -1214,6 +1530,34 @@ const notice = ref('')
 let noticeTimer = null
 const taskStatusOverrides = reactive({})
 
+// ================== 会议纪要 ==================
+const showMeetingNotes = ref(false)
+
+const meetingNotesTasks = reactive([
+  { content: '营销中心就业绩差距分解政策目标到每个城市经理，进行目标跟踪', owner: '营销中心-王总监', deadline: '2026-03-17' },
+  { content: '城市经理与辖区内骨干保持每周一次高频次沟通，推动公司业务政策及体系荣誉考核', owner: '各城市经理', deadline: '2026-03-14' },
+  { content: '区域结合公司沙龙活动积极推动市场开展小型活动，提升市场进人能力', owner: '区域业务部', deadline: '2026-03-21' }
+])
+
+const meetingNotesReminders = reactive([
+  { content: '下周一前提交各区域Q4业务政策宣推计划', target: '各区域负责人' },
+  { content: '关注新上市产品销售情况，及时反馈市场动态', target: '直销事业部全体' }
+])
+
+const addMeetingNotesTask = () => {
+  meetingNotesTasks.push({ content: '', owner: '', deadline: '' })
+}
+
+const addMeetingNotesReminder = () => {
+  meetingNotesReminders.push({ content: '', target: '' })
+}
+
+const dispatchAllMeetingNotes = () => {
+  const taskCount = meetingNotesTasks.filter(t => t.content.trim()).length
+  const reminderCount = meetingNotesReminders.filter(r => r.content.trim()).length
+  showNotice(`已派发 ${taskCount} 条任务、${reminderCount} 条提醒`)
+}
+
 const currentBusinessLineLabel = computed(() => {
   return businessLines.find((item) => item.value === analysisContext.businessLine)?.label || '全部业务线'
 })
@@ -1365,17 +1709,105 @@ const isMetricAdded = (templateId) => {
 }
 
 const toggleMetricCard = (templateId) => {
+  const indicatorIds = templateToIndicatorIds[templateId] || []
   const index = metricCards.value.findIndex(card => card.templateId === templateId)
   if (index !== -1) {
     removeMetricCard(index)
-    showNotice('已移除指标')
+    indicatorIds.forEach(id => {
+      const idx = activeAnalysisIds.value.indexOf(id)
+      if (idx !== -1) activeAnalysisIds.value.splice(idx, 1)
+    })
+    showNotice('已移除指标分析')
   } else {
     addMetricCard(templateId)
+    indicatorIds.forEach(id => {
+      if (!activeAnalysisIds.value.includes(id)) {
+        activeAnalysisIds.value.push(id)
+      }
+    })
     showNotice('已添加指标到分析')
   }
 }
 
 const manualCauses = reactive({})
+
+// Why分析法
+const whyAnalysis = reactive({})
+
+const getWhyRows = (indicatorId) => {
+  if (!whyAnalysis[indicatorId]) {
+    whyAnalysis[indicatorId] = [{ content: '' }]
+  }
+  return whyAnalysis[indicatorId]
+}
+
+const addWhyRow = (indicatorId) => {
+  if (!whyAnalysis[indicatorId]) {
+    whyAnalysis[indicatorId] = [{ content: '' }]
+  }
+  if (whyAnalysis[indicatorId].length < 7) {
+    whyAnalysis[indicatorId].push({ content: '' })
+  }
+}
+
+const removeWhyRow = (indicatorId, index) => {
+  if (whyAnalysis[indicatorId] && whyAnalysis[indicatorId].length > 1) {
+    whyAnalysis[indicatorId].splice(index, 1)
+  }
+}
+
+const autoResizeTextarea = (event) => {
+  const el = event.target
+  el.style.height = 'auto'
+  el.style.height = el.scrollHeight + 'px'
+}
+
+const aiGenerateWhys = (item) => {
+  const templateId = getTemplateIdForIndicator(item.name)
+  const causeTemplates = rootCauseTemplates[templateId] || rootCauseTemplates.overview
+  if (!whyAnalysis[item.id]) {
+    whyAnalysis[item.id] = []
+  }
+  whyAnalysis[item.id] = causeTemplates.map((t) => ({
+    content: `${t.dimension}：${t.factor}。${t.note}`
+  }))
+  showNotice('AI已生成根因参考，请根据实际情况修改')
+}
+
+// ================== 改善策略及行动计划 ==================
+const strategyData = reactive({})
+const actionPlansData = reactive({})
+
+// 默认示例素材
+const defaultStrategy = '通过公司政策引导全体系借助4季度业务政策，推动市场业绩拉动，同时区域业务部要积极配合、引导、推动辖区各团队年底荣誉考核。'
+
+const defaultActionPlans = [
+  { content: '积极宣推季度业务政策；每月组织召开城市发展委会议', owner: '营销中心-王总监', deadline: '2026-03-17' },
+  { content: '营销中心就业绩差距分解政策目标到每个城市经理进行目标跟踪', owner: '营销中心-王总监', deadline: '2026-03-21' },
+  { content: '城市经理要与辖区内骨干保持每周一次的高频次沟通，推动公司业务政策及体系荣誉考核', owner: '各城市经理', deadline: '2026-03-14' },
+  { content: '区域结合着公司的沙龙活动积极推动市场开展小型活动，提升市场进人能力', owner: '区域业务部', deadline: '2026-03-28' }
+]
+
+const getStrategy = (indicatorId) => {
+  if (!strategyData[indicatorId]) {
+    strategyData[indicatorId] = { content: defaultStrategy }
+  }
+  return strategyData[indicatorId]
+}
+
+const getActionPlans = (indicatorId) => {
+  if (!actionPlansData[indicatorId]) {
+    actionPlansData[indicatorId] = defaultActionPlans.map(p => ({ ...p }))
+  }
+  return actionPlansData[indicatorId]
+}
+
+const addActionPlan = (indicatorId) => {
+  if (!actionPlansData[indicatorId]) {
+    actionPlansData[indicatorId] = defaultActionPlans.map(p => ({ ...p }))
+  }
+  actionPlansData[indicatorId].push({ content: '', owner: '', deadline: '' })
+}
 
 const toggleMetricSpan = (index) => {
   const card = metricCards.value[index]
@@ -1462,9 +1894,13 @@ onUnmounted(() => {
 
 // 初始化：使用默认模板
 selectTemplate(meetingTemplates[0])
+// 初始化：激活所有异常指标
+initActiveAnalysisIds()
 </script>
 
 <style scoped>
 .fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; }
 .fade-enter-from, .fade-leave-to { opacity: 0; }
+.slide-down-enter-active, .slide-down-leave-active { transition: all 0.3s ease; }
+.slide-down-enter-from, .slide-down-leave-to { opacity: 0; transform: translateY(-12px); }
 </style>

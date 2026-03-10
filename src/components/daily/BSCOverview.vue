@@ -5,12 +5,12 @@
       经营概览
     </h2>
 
-    <!-- 桌面端：4列网格 -->
-    <div class="hidden lg:grid grid-cols-4 gap-4">
+    <!-- 桌面端：2列网格 -->
+    <div class="hidden lg:grid grid-cols-2 gap-4">
       <div
         v-for="(dimension, key) in bscData"
         :key="key"
-        class="bg-dashboard-dark/50 rounded-lg p-3 border border-dashboard-border hover:border-primary-500/30 transition-colors"
+        class="bg-dashboard-dark/50 rounded-lg p-4 border border-dashboard-border hover:border-primary-500/30 transition-colors"
       >
         <!-- 维度标题 -->
         <div class="flex items-center justify-between mb-3">
@@ -24,73 +24,71 @@
           />
         </div>
 
-        <!-- 表头：当月 / 累计 -->
-        <div class="flex items-center gap-1 mb-2 text-[11px] text-dashboard-muted">
-          <span class="flex-1 text-center">当月</span>
-          <span class="flex-1 text-center">累计</span>
-        </div>
-
-        <!-- 指标列表 -->
-        <div class="space-y-3">
-          <div
-            v-for="indicator in dimension.indicators"
-            :key="indicator.id"
-            class="group relative"
-          >
-            <!-- 指标名称 + 派发按钮 -->
-            <div class="flex items-center justify-between mb-1">
-              <span class="text-xs font-medium text-dashboard-muted">{{ indicator.name }}</span>
-              <button
-                v-if="getIndicatorStatus(indicator) === 'red'"
-                @click.stop="handleDispatch(indicator)"
-                class="flex-shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-status-red/15 text-status-red hover:bg-status-red/25 transition-colors whitespace-nowrap"
-                title="一键派发任务"
-              >
-                ✉️ 派发
-              </button>
-            </div>
-            <!-- 当月 + 累计数据 -->
-            <div class="flex items-center gap-1">
-              <div class="flex-1 flex items-center justify-center gap-1 bg-dashboard-dark/40 rounded px-1.5 py-0.5">
-                <span class="font-semibold text-dashboard-text text-sm">
-                  {{ formatValue(indicator) }}
-                </span>
-                <StatusLight
-                  :status="getIndicatorStatus(indicator)"
-                  size="small"
-                />
+        <!-- 表格式布局 -->
+        <table class="w-full">
+          <thead>
+            <tr class="text-xs text-dashboard-muted border-b border-dashboard-border/40">
+              <th class="text-left py-1.5 font-medium w-[40%]">指标</th>
+              <th class="text-center py-1.5 font-medium w-[24%]">当月</th>
+              <th class="text-center py-1.5 font-medium w-[24%]">累计</th>
+              <th class="text-right py-1.5 font-medium w-[12%]"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="indicator in dimension.indicators"
+              :key="indicator.id"
+              class="group relative border-b border-dashboard-border/20 last:border-0"
+            >
+              <!-- 指标名称 -->
+              <td class="py-2 pr-2 text-sm text-dashboard-muted whitespace-nowrap">{{ indicator.name }}</td>
+              <!-- 当月 -->
+              <td class="py-2 text-center">
+                <div class="inline-flex items-center gap-1">
+                  <span class="font-bold text-dashboard-text text-base">{{ formatValue(indicator) }}</span>
+                  <StatusLight :status="getIndicatorStatus(indicator)" size="small" />
+                </div>
+              </td>
+              <!-- 累计 -->
+              <td class="py-2 text-center">
+                <div class="inline-flex items-center gap-1">
+                  <span class="font-bold text-dashboard-text text-base">{{ formatAccValue(indicator) }}</span>
+                  <StatusLight :status="getAccIndicatorStatus(indicator)" size="small" />
+                </div>
+              </td>
+              <!-- 派发按钮 -->
+              <td class="py-2 text-right">
+                <button
+                  v-if="getIndicatorStatus(indicator) === 'red'"
+                  @click.stop="handleDispatch(indicator)"
+                  class="text-[10px] px-1.5 py-0.5 rounded bg-status-red/15 text-status-red hover:bg-status-red/25 transition-colors whitespace-nowrap"
+                  title="一键派发任务"
+                >
+                  ✉️ 派发
+                </button>
+              </td>
+              <!-- 悬浮提示 -->
+              <div class="absolute left-0 bottom-full mb-2 z-50 hidden group-hover:block bg-dashboard-dark border border-dashboard-border rounded-lg px-3 py-2 shadow-lg whitespace-nowrap text-xs">
+                <div class="mb-1">
+                  <span class="text-dashboard-muted">当月：</span>
+                  <span class="text-primary-300 font-medium">{{ formatValue(indicator) }}</span>
+                  <span class="text-dashboard-muted"> / 目标 </span>
+                  <span class="text-primary-300">{{ formatTargetValue(indicator) }}</span>
+                  <span class="text-dashboard-muted ml-1">达成率：</span>
+                  <span class="font-medium" :class="getAchievementClass(indicator)">{{ formatAchievement(indicator) }}</span>
+                </div>
+                <div>
+                  <span class="text-dashboard-muted">累计：</span>
+                  <span class="text-primary-300 font-medium">{{ formatAccValue(indicator) }}</span>
+                  <span class="text-dashboard-muted"> / 目标 </span>
+                  <span class="text-primary-300">{{ formatAccTargetValue(indicator) }}</span>
+                  <span class="text-dashboard-muted ml-1">达成率：</span>
+                  <span class="font-medium" :class="getAccAchievementClass(indicator)">{{ formatAccAchievement(indicator) }}</span>
+                </div>
               </div>
-              <div class="flex-1 flex items-center justify-center gap-1 bg-dashboard-dark/40 rounded px-1.5 py-0.5">
-                <span class="font-semibold text-dashboard-text text-sm">
-                  {{ formatAccValue(indicator) }}
-                </span>
-                <StatusLight
-                  :status="getAccIndicatorStatus(indicator)"
-                  size="small"
-                />
-              </div>
-            </div>
-            <!-- 悬浮提示 -->
-            <div class="absolute left-0 bottom-full mb-2 z-50 hidden group-hover:block bg-dashboard-dark border border-dashboard-border rounded-lg px-3 py-2 shadow-lg whitespace-nowrap text-xs">
-              <div class="mb-1">
-                <span class="text-dashboard-muted">当月：</span>
-                <span class="text-primary-300 font-medium">{{ formatValue(indicator) }}</span>
-                <span class="text-dashboard-muted"> / 目标 </span>
-                <span class="text-primary-300">{{ formatTargetValue(indicator) }}</span>
-                <span class="text-dashboard-muted ml-1">达成率：</span>
-                <span class="font-medium" :class="getAchievementClass(indicator)">{{ formatAchievement(indicator) }}</span>
-              </div>
-              <div>
-                <span class="text-dashboard-muted">累计：</span>
-                <span class="text-primary-300 font-medium">{{ formatAccValue(indicator) }}</span>
-                <span class="text-dashboard-muted"> / 目标 </span>
-                <span class="text-primary-300">{{ formatAccTargetValue(indicator) }}</span>
-                <span class="text-dashboard-muted ml-1">达成率：</span>
-                <span class="font-medium" :class="getAccAchievementClass(indicator)">{{ formatAccAchievement(indicator) }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
+            </tr>
+          </tbody>
+        </table>
 
       </div>
     </div>
