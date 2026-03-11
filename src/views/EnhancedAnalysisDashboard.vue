@@ -140,11 +140,15 @@
       </div>
     </div>
 
-    <!-- 会议纪要浮动面板 -->
-    <transition name="slide-down">
-      <div v-if="showMeetingNotes" class="sticky top-[120px] z-15 border-b border-primary-500/30 bg-dashboard-card/95 backdrop-blur-sm shadow-lg">
-        <div class="px-6 py-4">
-          <div class="flex items-center justify-between mb-3">
+    <!-- 会议纪要固定浮动面板（右下角） -->
+    <teleport to="body">
+      <!-- 展开的面板 -->
+      <transition name="slide-down">
+        <div v-if="showMeetingNotes"
+          class="fixed right-6 bottom-6 w-[620px] max-h-[70vh] z-50 rounded-xl border border-primary-500/30 bg-dashboard-card/98 backdrop-blur-md shadow-2xl flex flex-col overflow-hidden"
+        >
+          <!-- 标题栏 -->
+          <div class="px-5 py-3 border-b border-primary-500/20 flex items-center justify-between flex-shrink-0">
             <div class="flex items-center gap-2">
               <span class="text-base">📝</span>
               <h3 class="text-sm font-semibold text-dashboard-text">会议纪要</h3>
@@ -168,124 +172,156 @@
             </div>
           </div>
 
-          <div class="grid grid-cols-2 gap-4">
-            <!-- 任务板块 -->
-            <div class="bg-dashboard-dark/40 rounded-lg p-3 border border-dashboard-border">
-              <div class="flex items-center justify-between mb-2">
-                <div class="flex items-center gap-1.5">
-                  <span class="w-2 h-2 rounded-full bg-primary-400"></span>
-                  <span class="text-xs font-semibold text-dashboard-text">任务</span>
-                  <span class="text-[10px] text-dashboard-muted">（{{ meetingNotesTasks.length }}）</span>
+          <!-- 内容区（可滚动） -->
+          <div class="px-5 py-4 overflow-y-auto flex-1">
+            <div class="grid grid-cols-2 gap-4">
+              <!-- 任务板块 -->
+              <div class="bg-dashboard-dark/40 rounded-lg p-3 border border-dashboard-border">
+                <div class="flex items-center justify-between mb-2">
+                  <div class="flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-primary-400"></span>
+                    <span class="text-xs font-semibold text-dashboard-text">任务</span>
+                    <span class="text-[10px] text-dashboard-muted">（{{ meetingNotesTasks.length }}）</span>
+                  </div>
+                  <button
+                    @click="addMeetingNotesTask"
+                    class="text-[10px] px-1.5 py-0.5 rounded border border-primary-500/30 text-primary-300 hover:bg-primary-500/10 transition-colors"
+                  >
+                    + 新增
+                  </button>
                 </div>
-                <button
-                  @click="addMeetingNotesTask"
-                  class="text-[10px] px-1.5 py-0.5 rounded border border-primary-500/30 text-primary-300 hover:bg-primary-500/10 transition-colors"
-                >
-                  + 新增
-                </button>
-              </div>
-              <div class="space-y-2 max-h-[180px] overflow-y-auto">
-                <div
-                  v-for="(task, tIdx) in meetingNotesTasks"
-                  :key="tIdx"
-                  class="rounded border border-dashboard-border/60 bg-dashboard-dark/50 p-2 text-xs"
-                >
-                  <div class="flex items-start gap-2">
-                    <span class="flex-shrink-0 mt-0.5 text-[10px] font-bold text-primary-300">T{{ tIdx + 1 }}</span>
-                    <div class="flex-1 space-y-1.5">
-                      <input
-                        v-model="task.content"
-                        placeholder="任务内容..."
-                        class="w-full bg-transparent border-b border-dashboard-border/40 text-dashboard-text placeholder-dashboard-muted/50 focus:outline-none focus:border-primary-500/50 pb-0.5 text-xs"
-                      />
-                      <div class="flex items-center gap-2">
+                <div class="space-y-2 max-h-[240px] overflow-y-auto">
+                  <div
+                    v-for="(task, tIdx) in meetingNotesTasks"
+                    :key="tIdx"
+                    class="rounded border border-dashboard-border/60 bg-dashboard-dark/50 p-2 text-xs"
+                  >
+                    <div class="flex items-start gap-2">
+                      <span class="flex-shrink-0 mt-0.5 text-[10px] font-bold text-primary-300">T{{ tIdx + 1 }}</span>
+                      <div class="flex-1 space-y-1.5">
                         <input
-                          v-model="task.owner"
-                          placeholder="责任人"
-                          class="w-20 bg-transparent border-b border-dashboard-border/40 text-primary-300 placeholder-dashboard-muted/50 focus:outline-none focus:border-primary-500/50 pb-0.5 text-[10px]"
+                          v-model="task.content"
+                          placeholder="任务内容..."
+                          class="w-full bg-transparent border-b border-dashboard-border/40 text-dashboard-text placeholder-dashboard-muted/50 focus:outline-none focus:border-primary-500/50 pb-0.5 text-xs"
+                        />
+                        <div class="flex items-center gap-2">
+                          <input
+                            v-model="task.owner"
+                            placeholder="责任人"
+                            class="w-20 bg-transparent border-b border-dashboard-border/40 text-primary-300 placeholder-dashboard-muted/50 focus:outline-none focus:border-primary-500/50 pb-0.5 text-[10px]"
+                          />
+                          <input
+                            v-model="task.deadline"
+                            type="date"
+                            class="bg-transparent border-b border-dashboard-border/40 text-dashboard-muted focus:outline-none focus:border-primary-500/50 pb-0.5 text-[10px]"
+                          />
+                        </div>
+                      </div>
+                      <button
+                        @click="meetingNotesTasks.splice(tIdx, 1)"
+                        class="flex-shrink-0 text-dashboard-muted hover:text-status-red text-[10px]"
+                      >✕</button>
+                    </div>
+                  </div>
+                  <div v-if="meetingNotesTasks.length === 0" class="text-center py-3 text-[10px] text-dashboard-muted">
+                    暂无任务，点击"+ 新增"添加
+                  </div>
+                </div>
+              </div>
+
+              <!-- 提醒项板块 -->
+              <div class="bg-dashboard-dark/40 rounded-lg p-3 border border-dashboard-border">
+                <div class="flex items-center justify-between mb-2">
+                  <div class="flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-status-yellow"></span>
+                    <span class="text-xs font-semibold text-dashboard-text">提醒项</span>
+                    <span class="text-[10px] text-dashboard-muted">（{{ meetingNotesReminders.length }}）</span>
+                  </div>
+                  <button
+                    @click="addMeetingNotesReminder"
+                    class="text-[10px] px-1.5 py-0.5 rounded border border-status-yellow/30 text-status-yellow hover:bg-status-yellow/10 transition-colors"
+                  >
+                    + 新增
+                  </button>
+                </div>
+                <div class="space-y-2 max-h-[240px] overflow-y-auto">
+                  <div
+                    v-for="(reminder, rIdx) in meetingNotesReminders"
+                    :key="rIdx"
+                    class="rounded border border-dashboard-border/60 bg-dashboard-dark/50 p-2 text-xs"
+                  >
+                    <div class="flex items-start gap-2">
+                      <span class="flex-shrink-0 mt-0.5 text-[10px] font-bold text-status-yellow">R{{ rIdx + 1 }}</span>
+                      <div class="flex-1 space-y-1.5">
+                        <input
+                          v-model="reminder.content"
+                          placeholder="提醒事项..."
+                          class="w-full bg-transparent border-b border-dashboard-border/40 text-dashboard-text placeholder-dashboard-muted/50 focus:outline-none focus:border-primary-500/50 pb-0.5 text-xs"
                         />
                         <input
-                          v-model="task.deadline"
-                          type="date"
-                          class="bg-transparent border-b border-dashboard-border/40 text-dashboard-muted focus:outline-none focus:border-primary-500/50 pb-0.5 text-[10px]"
+                          v-model="reminder.target"
+                          placeholder="提醒对象（部门/人员）"
+                          class="w-full bg-transparent border-b border-dashboard-border/40 text-primary-300 placeholder-dashboard-muted/50 focus:outline-none focus:border-primary-500/50 pb-0.5 text-[10px]"
                         />
                       </div>
+                      <button
+                        @click="meetingNotesReminders.splice(rIdx, 1)"
+                        class="flex-shrink-0 text-dashboard-muted hover:text-status-red text-[10px]"
+                      >✕</button>
                     </div>
-                    <button
-                      @click="meetingNotesTasks.splice(tIdx, 1)"
-                      class="flex-shrink-0 text-dashboard-muted hover:text-status-red text-[10px]"
-                    >✕</button>
                   </div>
-                </div>
-                <div v-if="meetingNotesTasks.length === 0" class="text-center py-3 text-[10px] text-dashboard-muted">
-                  暂无任务，点击"+ 新增"添加
-                </div>
-              </div>
-            </div>
-
-            <!-- 提醒项板块 -->
-            <div class="bg-dashboard-dark/40 rounded-lg p-3 border border-dashboard-border">
-              <div class="flex items-center justify-between mb-2">
-                <div class="flex items-center gap-1.5">
-                  <span class="w-2 h-2 rounded-full bg-status-yellow"></span>
-                  <span class="text-xs font-semibold text-dashboard-text">提醒项</span>
-                  <span class="text-[10px] text-dashboard-muted">（{{ meetingNotesReminders.length }}）</span>
-                </div>
-                <button
-                  @click="addMeetingNotesReminder"
-                  class="text-[10px] px-1.5 py-0.5 rounded border border-status-yellow/30 text-status-yellow hover:bg-status-yellow/10 transition-colors"
-                >
-                  + 新增
-                </button>
-              </div>
-              <div class="space-y-2 max-h-[180px] overflow-y-auto">
-                <div
-                  v-for="(reminder, rIdx) in meetingNotesReminders"
-                  :key="rIdx"
-                  class="rounded border border-dashboard-border/60 bg-dashboard-dark/50 p-2 text-xs"
-                >
-                  <div class="flex items-start gap-2">
-                    <span class="flex-shrink-0 mt-0.5 text-[10px] font-bold text-status-yellow">R{{ rIdx + 1 }}</span>
-                    <div class="flex-1 space-y-1.5">
-                      <input
-                        v-model="reminder.content"
-                        placeholder="提醒事项..."
-                        class="w-full bg-transparent border-b border-dashboard-border/40 text-dashboard-text placeholder-dashboard-muted/50 focus:outline-none focus:border-primary-500/50 pb-0.5 text-xs"
-                      />
-                      <input
-                        v-model="reminder.target"
-                        placeholder="提醒对象（部门/人员）"
-                        class="w-full bg-transparent border-b border-dashboard-border/40 text-primary-300 placeholder-dashboard-muted/50 focus:outline-none focus:border-primary-500/50 pb-0.5 text-[10px]"
-                      />
-                    </div>
-                    <button
-                      @click="meetingNotesReminders.splice(rIdx, 1)"
-                      class="flex-shrink-0 text-dashboard-muted hover:text-status-red text-[10px]"
-                    >✕</button>
+                  <div v-if="meetingNotesReminders.length === 0" class="text-center py-3 text-[10px] text-dashboard-muted">
+                    暂无提醒项，点击"+ 新增"添加
                   </div>
-                </div>
-                <div v-if="meetingNotesReminders.length === 0" class="text-center py-3 text-[10px] text-dashboard-muted">
-                  暂无提醒项，点击"+ 新增"添加
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
-    </transition>
+      </transition>
+
+      <!-- 收起时的悬浮按钮 -->
+      <button
+        v-if="!showMeetingNotes"
+        @click="showMeetingNotes = true"
+        class="fixed right-6 bottom-6 z-50 flex items-center gap-2 px-4 py-2.5 rounded-full bg-primary-500/90 text-white text-sm font-medium shadow-lg hover:bg-primary-600 transition-all hover:scale-105"
+      >
+        <span>📝</span>
+        <span>会议纪要</span>
+        <span class="text-[10px] px-1.5 py-0.5 rounded-full bg-white/20">
+          {{ meetingNotesTasks.length + meetingNotesReminders.length }}
+        </span>
+      </button>
+    </teleport>
 
     <!-- 主内容区 -->
     <main class="flex-1 flex">
-      <!-- 指标卡片库（侧边栏） - 固定不动 -->
+      <!-- 指标卡片库（侧边栏） - 固定在左侧 -->
       <aside
         v-if="!presentationMode"
-        class="w-72 flex-shrink-0 border-r border-dashboard-border overflow-y-auto sticky top-[120px] self-start max-h-[calc(100vh-120px)]"
+        class="w-72 flex-shrink-0 border-r border-dashboard-border overflow-y-auto"
         :class="showInsightPanel ? 'bg-dashboard-card/50' : 'bg-dashboard-card'"
+        style="position: fixed; top: 120px; bottom: 0; z-index: 10;"
       >
-        <!-- 固定标题 -->
-        <div class="p-4 border-b border-dashboard-border sticky top-0 z-10 bg-dashboard-card/95 backdrop-blur-sm">
+        <!-- 固定标题 + 搜索 -->
+        <div class="p-4 border-b border-dashboard-border bg-dashboard-card/95 backdrop-blur-sm">
           <h3 class="text-sm font-semibold text-dashboard-text">指标导航</h3>
           <p class="text-xs text-dashboard-muted mt-0.5">点击快速跳转到对应分析</p>
+          <!-- 搜索框 -->
+          <div class="relative mt-2">
+            <input
+              v-model="sidebarSearch"
+              type="text"
+              placeholder="搜索指标..."
+              class="w-full bg-dashboard-dark/50 border border-dashboard-border rounded-lg pl-7 pr-7 py-1.5 text-xs text-dashboard-text placeholder-dashboard-muted/50 focus:outline-none focus:border-primary-500/50"
+            />
+            <span class="absolute left-2 top-1/2 -translate-y-1/2 text-dashboard-muted text-xs">🔍</span>
+            <button
+              v-if="sidebarSearch"
+              @click="sidebarSearch = ''"
+              class="absolute right-2 top-1/2 -translate-y-1/2 text-dashboard-muted hover:text-dashboard-text text-xs"
+            >✕</button>
+          </div>
         </div>
 
         <!-- 指标快速跳转 -->
@@ -313,7 +349,7 @@
           </div>
           <p class="text-[10px] text-dashboard-muted mb-2">点击切换指标在右侧分析中的显隐</p>
 
-          <template v-for="(dimension, dimKey) in scorecardData" :key="dimKey">
+          <template v-for="(dimension, dimKey) in filteredSidebarData" :key="dimKey">
             <div class="text-[10px] font-medium text-dashboard-muted mt-2.5 mb-1 px-1">
               {{ dimension.icon }} {{ dimension.name }}
             </div>
@@ -353,7 +389,7 @@
       </aside>
 
       <!-- 报告画布 -->
-      <section class="flex-1 p-4 lg:p-6 space-y-6 min-w-0">
+      <section class="flex-1 p-4 lg:p-6 space-y-6 min-w-0" :style="!presentationMode ? 'margin-left: 18rem' : ''">
 
         <!-- ==================== PDCA：上月任务追踪 ==================== -->
         <div data-section="pdca-tracking" class="rounded-lg border border-primary-500/20 bg-dashboard-dark/30 p-5">
@@ -1144,6 +1180,24 @@ const getTemplateIdForIndicator = (name) => {
   }
   return map[name] || 'overview'
 }
+
+// 侧边栏搜索
+const sidebarSearch = ref('')
+
+const filteredSidebarData = computed(() => {
+  const query = sidebarSearch.value.trim().toLowerCase()
+  if (!query) return scorecardData.value
+  const result = {}
+  for (const [dimKey, dimension] of Object.entries(scorecardData.value)) {
+    const filteredRows = dimension.rows.filter(row =>
+      row.name.toLowerCase().includes(query)
+    )
+    if (filteredRows.length > 0) {
+      result[dimKey] = { ...dimension, rows: filteredRows }
+    }
+  }
+  return result
+})
 
 // 模板ID → BSC指标ID映射
 const templateToIndicatorIds = {
