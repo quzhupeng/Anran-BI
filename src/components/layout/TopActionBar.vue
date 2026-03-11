@@ -1,6 +1,6 @@
 <template>
   <header class="sticky top-0 z-50 glass-effect border-b border-dashboard-border">
-    <div class="px-6 py-3 flex items-center justify-between">
+    <div class="pl-6 pr-3 py-3 flex items-center justify-between">
       <!-- 左侧：标志 + 标题 + 功能按钮 -->
       <div class="flex items-center gap-4">
         <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center flex-shrink-0">

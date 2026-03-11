@@ -3,7 +3,7 @@
     <!-- 桌面端顶部操作台 -->
     <TopActionBar
       v-if="!isAnalysisMode"
-      class="hidden lg:flex"
+      class="hidden lg:block"
       :isAnalysisMode="isAnalysisMode"
       @toggle-mode="toggleMode"
       @open-chatbi="showChatBI = true"
