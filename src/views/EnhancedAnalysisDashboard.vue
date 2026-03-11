@@ -145,7 +145,7 @@
       <!-- 展开的面板 -->
       <transition name="slide-down">
         <div v-if="showMeetingNotes"
-          class="fixed right-6 bottom-6 w-[620px] max-h-[70vh] z-50 rounded-xl border border-primary-500/30 bg-dashboard-card/98 backdrop-blur-md shadow-2xl flex flex-col overflow-hidden"
+          class="fixed left-[300px] right-6 bottom-6 top-[140px] z-50 rounded-xl border border-primary-500/30 bg-dashboard-card/98 backdrop-blur-md shadow-2xl flex flex-col overflow-hidden"
         >
           <!-- 标题栏 -->
           <div class="px-5 py-3 border-b border-primary-500/20 flex items-center justify-between flex-shrink-0">
@@ -157,6 +157,15 @@
               </span>
             </div>
             <div class="flex items-center gap-2">
+              <span v-if="meetingNotesSavedTime" class="text-[10px] text-status-green">
+                ✓ 已暂存 {{ meetingNotesSavedTime }}
+              </span>
+              <button
+                @click="saveMeetingNotesDraft"
+                class="px-3 py-1.5 rounded-lg border border-status-green/40 text-status-green text-xs font-medium hover:bg-status-green/10 transition-colors"
+              >
+                💾 暂存
+              </button>
               <button
                 @click="dispatchAllMeetingNotes"
                 class="px-3 py-1.5 rounded-lg bg-primary-500 text-white text-xs font-medium hover:bg-primary-600 transition-colors"
@@ -172,11 +181,11 @@
             </div>
           </div>
 
-          <!-- 内容区（可滚动） -->
-          <div class="px-5 py-4 overflow-y-auto flex-1">
-            <div class="grid grid-cols-2 gap-4">
+          <!-- 内容区（可滚动，填满剩余空间） -->
+          <div class="px-5 py-4 overflow-y-auto flex-1 min-h-0">
+            <div class="grid grid-cols-2 gap-4 h-full">
               <!-- 任务板块 -->
-              <div class="bg-dashboard-dark/40 rounded-lg p-3 border border-dashboard-border">
+              <div class="bg-dashboard-dark/40 rounded-lg p-3 border border-dashboard-border flex flex-col">
                 <div class="flex items-center justify-between mb-2">
                   <div class="flex items-center gap-1.5">
                     <span class="w-2 h-2 rounded-full bg-primary-400"></span>
@@ -190,7 +199,7 @@
                     + 新增
                   </button>
                 </div>
-                <div class="space-y-2 max-h-[240px] overflow-y-auto">
+                <div class="space-y-2.5 flex-1 overflow-y-auto">
                   <div
                     v-for="(task, tIdx) in meetingNotesTasks"
                     :key="tIdx"
@@ -230,7 +239,7 @@
               </div>
 
               <!-- 提醒项板块 -->
-              <div class="bg-dashboard-dark/40 rounded-lg p-3 border border-dashboard-border">
+              <div class="bg-dashboard-dark/40 rounded-lg p-3 border border-dashboard-border flex flex-col">
                 <div class="flex items-center justify-between mb-2">
                   <div class="flex items-center gap-1.5">
                     <span class="w-2 h-2 rounded-full bg-status-yellow"></span>
@@ -244,7 +253,7 @@
                     + 新增
                   </button>
                 </div>
-                <div class="space-y-2 max-h-[240px] overflow-y-auto">
+                <div class="space-y-2.5 flex-1 overflow-y-auto">
                   <div
                     v-for="(reminder, rIdx) in meetingNotesReminders"
                     :key="rIdx"
@@ -1611,6 +1620,41 @@ const dispatchAllMeetingNotes = () => {
   const reminderCount = meetingNotesReminders.filter(r => r.content.trim()).length
   showNotice(`已派发 ${taskCount} 条任务、${reminderCount} 条提醒`)
 }
+
+// 会议纪要暂存
+const DRAFT_KEY = 'meeting-notes-draft'
+const meetingNotesSavedTime = ref('')
+
+const saveMeetingNotesDraft = () => {
+  const draft = {
+    tasks: meetingNotesTasks.map(t => ({ ...t })),
+    reminders: meetingNotesReminders.map(r => ({ ...r })),
+    savedAt: new Date().toISOString()
+  }
+  localStorage.setItem(DRAFT_KEY, JSON.stringify(draft))
+  meetingNotesSavedTime.value = new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
+  showNotice('会议纪要已暂存')
+}
+
+const loadMeetingNotesDraft = () => {
+  try {
+    const raw = localStorage.getItem(DRAFT_KEY)
+    if (!raw) return
+    const draft = JSON.parse(raw)
+    if (draft.tasks?.length) {
+      meetingNotesTasks.splice(0, meetingNotesTasks.length, ...draft.tasks)
+    }
+    if (draft.reminders?.length) {
+      meetingNotesReminders.splice(0, meetingNotesReminders.length, ...draft.reminders)
+    }
+    if (draft.savedAt) {
+      meetingNotesSavedTime.value = new Date(draft.savedAt).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
+    }
+  } catch (e) { /* ignore */ }
+}
+
+// 页面加载时恢复暂存
+loadMeetingNotesDraft()
 
 const currentBusinessLineLabel = computed(() => {
   return businessLines.find((item) => item.value === analysisContext.businessLine)?.label || '全部业务线'
